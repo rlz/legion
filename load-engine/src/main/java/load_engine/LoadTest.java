@@ -27,12 +27,21 @@
 
 package load_engine;
 
-import load_engine.runner.RunHelper;
+import com.codahale.metrics.MetricRegistry;
+
+import java.util.Collection;
+import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public interface LoadTest<Task> {
     default String getName() {
         return this.getClass().getCanonicalName();
     }
 
-    void init(RunHelper<Task> runHelper);
+    void init(Properties properties, MetricRegistry registry);
+
+    Collection<Supplier<Task>> getGenerators();
+
+    Collection<Consumer<Task>> getLoaders();
 }

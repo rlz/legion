@@ -42,6 +42,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
+import java.util.Properties;
 
 public class JarRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(JarRunner.class);
@@ -50,7 +51,7 @@ public class JarRunner {
     private final File jarFile;
     private final URL jar;
     private final MetricRegistry registry;
-    private LoadGenerator<Object> loadGenerator;
+    private LoadGenerator loadGenerator;
     private String testName;
 
     public JarRunner(File jar, MetricRegistry registry) {
@@ -80,10 +81,9 @@ public class JarRunner {
         }
         try {
             LoadTest testInstance = test.newInstance();
-            loadGenerator = new LoadGenerator<>(maxDuration, queriesLimit, qpsLimit, new Metrics(registry));
-            RunHelper runHelper = new RunHelper<>(loadGenerator);
-            testInstance.init(runHelper);
-            runHelper.start();
+            testInstance.init(new Properties(), registry); // todo: provide properties
+            loadGenerator = new LoadGenerator(maxDuration, queriesLimit, qpsLimit, new Metrics(registry));
+            loadGenerator.start(testInstance.getGenerators(), testInstance.getLoaders());
         } catch (InstantiationException | IllegalAccessException e) {
             LOGGER.error("Can't instantiate test", e);
             throw new RuntimeException(e);

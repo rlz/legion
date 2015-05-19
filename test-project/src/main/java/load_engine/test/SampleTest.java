@@ -27,17 +27,37 @@
 
 package load_engine.test;
 
+import com.beust.jcommander.internal.Lists;
+import com.codahale.metrics.MetricRegistry;
 import load_engine.LoadTest;
-import load_engine.runner.RunHelper;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class SampleTest implements LoadTest<String> {
+    List<Supplier<String>> generators = Lists.newArrayList();
+    List<Consumer<String>> loaders = Lists.newArrayList();
+
     @Override
-    public void init(RunHelper<String> runHelper) {
+    public void init(Properties properties, MetricRegistry registry) {
         AtomicInteger counter = new AtomicInteger();
-        runHelper
-                .withSuppliers(() -> "r" + Integer.toString(counter.incrementAndGet()), 10)
-                .withConsumers(System.out::println, 10);
+        for (int i = 0; i < 10; ++i) {
+            generators.add(() -> "r" + Integer.toString(counter.incrementAndGet()));
+            loaders.add(System.out::println);
+        }
+    }
+
+    @Override
+    public Collection<Supplier<String>> getGenerators() {
+        return generators;
+    }
+
+    @Override
+    public Collection<Consumer<String>> getLoaders() {
+        return loaders;
     }
 }

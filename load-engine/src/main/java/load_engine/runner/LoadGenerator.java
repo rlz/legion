@@ -27,6 +27,7 @@
 
 package load_engine.runner;
 
+import com.beust.jcommander.internal.Lists;
 import com.codahale.metrics.MetricRegistry;
 import load_engine.Metrics;
 
@@ -68,6 +69,16 @@ public class LoadGenerator<Task> {
         }
     }
 
+    public static <T> Collection<T> many(T obj, int count) {
+        List<T> result = Lists.newArrayList();
+
+        for (int i = 0; i < count; ++i) {
+            result.add(obj);
+        }
+
+        return result;
+    }
+
     public int getMaxDuration() {
         return maxDuration;
     }
@@ -84,7 +95,7 @@ public class LoadGenerator<Task> {
         return metrics;
     }
 
-    public void start(Collection<Supplier<Task>> suppliers, Collection<Consumer<Task>> consumers) {
+    public void start(Collection<? extends Supplier<Task>> suppliers, Collection<? extends Consumer<Task>> consumers) {
         if (mainThread != null) {
             throw new IllegalStateException("Load generator can't be executed twice");
         }
@@ -110,7 +121,7 @@ public class LoadGenerator<Task> {
         mainThread.interrupt();
     }
 
-    public void doTest(Collection<Supplier<Task>> suppliers, Collection<Consumer<Task>> consumers) throws InterruptedException {
+    public void doTest(Collection<? extends Supplier<Task>> suppliers, Collection<? extends Consumer<Task>> consumers) throws InterruptedException {
         this.start(suppliers, consumers);
         this.join();
     }
@@ -120,7 +131,7 @@ public class LoadGenerator<Task> {
         private final List<LoadThread<Task>> loadThreads = new ArrayList<>();
         private final BlockingQueue<ScheduledTask<Task>> queue = new ArrayBlockingQueue<>(10000);
 
-        public MainThread(Collection<Supplier<Task>> suppliers, Collection<Consumer<Task>> consumers) {
+        public MainThread(Collection<? extends Supplier<Task>> suppliers, Collection<? extends Consumer<Task>> consumers) {
             QpsScheduler scheduler = new QpsScheduler(qpsLimit);
             BooleanSupplier canSchedule = UNLIMITED_QUERIES;
             if (queriesLimit > 0) {
