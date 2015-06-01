@@ -25,31 +25,37 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli;
+package load_engine.cli.commands;
 
 import com.beust.jcommander.Parameters;
-import load_engine.agent.AgentClient;
+import load_engine.agent.data.RunInfo;
+import load_engine.cli.AgentInfo;
+import load_engine.cli.OrchEngine;
+import load_engine.cli.OrchTestInfo;
 
-@Parameters(commandNames = "agents")
-class Agents implements OrchEngine.Command {
+import java.util.Map;
+
+@Parameters(commandNames = "tests")
+public class Tests implements OrchEngine.Command {
     private OrchEngine orchEngine;
 
-    public Agents(OrchEngine orchEngine) {
+    public Tests(OrchEngine orchEngine) {
         this.orchEngine = orchEngine;
     }
 
     @Override
-    public void run() {
-        for (AgentInfo agent : orchEngine.getAgents()) {
-            String version;
-            try {
-                version = new AgentClient(agent.host, agent.port).version();
-            } catch (Exception e) {
-                System.out.printf("%s:%s - error\n", agent.host, agent.port);
-                e.printStackTrace();
-                continue;
+    public void run() throws Exception {
+        Map<String, OrchTestInfo> tests = orchEngine.collectTests();
+        for (Map.Entry<String, OrchTestInfo> e : tests.entrySet()) {
+            RunInfo run = e.getValue().runInfo;
+            System.out.printf("= %s%s ==\n", run.runId, e.getValue().isRunning ? " (running)" : "");
+            System.out.printf("  jar: %s\n", run.jarId);
+            System.out.printf("  test: %s\n", run.testName);
+            System.out.printf("  limits: %s %s %s\n", run.durationLimit, run.queriesLimit, run.qpsLimit);
+            System.out.println("  agents:");
+            for (AgentInfo agent : e.getValue().agents) {
+                System.out.printf("    %s\n", agent);
             }
-            System.out.printf("%s:%s - %s\n", agent.host, agent.port, version);
         }
     }
 }

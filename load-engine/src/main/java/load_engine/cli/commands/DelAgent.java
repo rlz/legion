@@ -25,20 +25,27 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli;
+package load_engine.cli.commands;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import load_engine.cli.AgentInfo;
+import load_engine.cli.OrchEngine;
 
-@Parameters(commandNames = "agents-clear")
-class ClearAgents implements OrchEngine.Command {
+@Parameters(commandNames = "agent-del")
+public class DelAgent implements OrchEngine.Command {
+    @Parameter(names = "-host", required = true)
+    String host;
+    @Parameter(names = "-port")
+    int port = 3500;
     private OrchEngine orchEngine;
 
-    public ClearAgents(OrchEngine orchEngine) {
+    public DelAgent(OrchEngine orchEngine) {
         this.orchEngine = orchEngine;
     }
 
     @Override
     public void run() {
-        orchEngine.clearAgents();
+        orchEngine.delAgent(new AgentInfo(host, port));
     }
 }

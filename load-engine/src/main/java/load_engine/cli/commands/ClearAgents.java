@@ -25,28 +25,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli;
+package load_engine.cli.commands;
 
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import load_engine.agent.AgentClient;
+import load_engine.cli.OrchEngine;
 
-import java.io.File;
-
-@Parameters(commandNames = "jar-upload")
-class JarsUpload implements OrchEngine.Command {
-    @Parameter(names = "-jar")
-    File jar;
+@Parameters(commandNames = "agents-clear")
+public class ClearAgents implements OrchEngine.Command {
     private OrchEngine orchEngine;
 
-    public JarsUpload(OrchEngine orchEngine) {
+    public ClearAgents(OrchEngine orchEngine) {
         this.orchEngine = orchEngine;
     }
 
     @Override
-    public void run() throws Exception {
-        for (AgentInfo agent : orchEngine.getAgents()) {
-            new AgentClient(agent.host, agent.port).uploadJar(jar);
-        }
+    public void run() {
+        orchEngine.clearAgents();
     }
 }

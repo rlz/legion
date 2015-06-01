@@ -40,6 +40,7 @@ import jline.console.ConsoleReader;
 import jline.console.completer.Completer;
 import load_engine.agent.data.JarInfo;
 import load_engine.agent.data.RunInfo;
+import load_engine.cli.commands.*;
 
 import java.io.File;
 import java.io.IOException;

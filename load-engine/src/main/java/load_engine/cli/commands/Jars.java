@@ -25,14 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli;
+package load_engine.cli.commands;
 
 import com.beust.jcommander.Parameters;
+import load_engine.cli.AgentInfo;
+import load_engine.cli.OrchEngine;
+import load_engine.cli.OrchJarInfo;
 
 import java.util.Map;
 
 @Parameters(commandNames = "jars")
-class Jars implements OrchEngine.Command {
+public class Jars implements OrchEngine.Command {
     private OrchEngine orchEngine;
 
     public Jars(OrchEngine orchEngine) {

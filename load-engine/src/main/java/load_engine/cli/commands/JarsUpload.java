@@ -25,33 +25,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli;
+package load_engine.cli.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import load_engine.agent.data.RunStats;
+import load_engine.agent.AgentClient;
+import load_engine.cli.AgentInfo;
+import load_engine.cli.OrchEngine;
 
-@Parameters(commandNames = "test-stats")
-class TestStats implements OrchEngine.Command {
-    @Parameter(names = "-test", required = true)
-    String testId;
+import java.io.File;
+
+@Parameters(commandNames = "jar-upload")
+public class JarsUpload implements OrchEngine.Command {
+    @Parameter(names = "-jar")
+    File jar;
     private OrchEngine orchEngine;
 
-    public TestStats(OrchEngine orchEngine) {
+    public JarsUpload(OrchEngine orchEngine) {
         this.orchEngine = orchEngine;
     }
 
     @Override
     public void run() throws Exception {
-        OrchTestInfo test = orchEngine.collectTests().get(testId);
-        if (test == null) {
-            System.out.println("Test is not found");
-            return;
-        }
-        for (AgentInfo agent : test.agents) {
-            RunStats stats = agent.client().stats(testId);
-            System.out.printf("= %s (start: %s, duration: %s) ==\n", agent, stats.startDate, stats.duration);
-            System.out.printf("  Queries: %s (success: %s, exceptions: %s)\n", stats.queries.count, stats.success.count, stats.exceptions.count);
+        for (AgentInfo agent : orchEngine.getAgents()) {
+            new AgentClient(agent.host, agent.port).uploadJar(jar);
         }
     }
 }

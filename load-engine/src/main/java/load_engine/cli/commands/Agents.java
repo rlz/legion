@@ -25,25 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli;
+package load_engine.cli.commands;
 
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import load_engine.agent.AgentClient;
+import load_engine.cli.AgentInfo;
+import load_engine.cli.OrchEngine;
 
-@Parameters(commandNames = "agent-add")
-class AddAgent implements OrchEngine.Command {
-    @Parameter(names = "-host", required = true)
-    String host;
-    @Parameter(names = "-port")
-    int port = 3500;
+@Parameters(commandNames = "agents")
+public class Agents implements OrchEngine.Command {
     private OrchEngine orchEngine;
 
-    public AddAgent(OrchEngine orchEngine) {
+    public Agents(OrchEngine orchEngine) {
         this.orchEngine = orchEngine;
     }
 
     @Override
     public void run() {
-        orchEngine.addAgent(new AgentInfo(host, port));
+        for (AgentInfo agent : orchEngine.getAgents()) {
+            String version;
+            try {
+                version = new AgentClient(agent.host, agent.port).version();
+            } catch (Exception e) {
+                System.out.printf("%s:%s - error\n", agent.host, agent.port);
+                e.printStackTrace();
+                continue;
+            }
+            System.out.printf("%s:%s - %s\n", agent.host, agent.port, version);
+        }
     }
 }
