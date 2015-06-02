@@ -27,14 +27,17 @@
 
 package load_engine.agent;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
 import com.sun.net.httpserver.HttpExchange;
 import load_engine.Metrics;
+import load_engine.agent.data.DataTools;
 import load_engine.agent.data.RunInfo;
 import load_engine.agent.data.RunRequest;
-import load_engine.agent.data.RunStats;
 import load_engine.agent.data.RunsList;
+import load_engine.agent.data.stats.*;
 import load_engine.runner.JarRunner;
 
 import java.io.BufferedReader;
@@ -62,11 +65,42 @@ public class RunsHandler implements JsonHttpHandler {
         Metrics metrics = runner.getMetrics();
         stats.duration = metrics.duration.getValue();
         stats.startDate = metrics.startDate.getValue();
-        RunStats.addTimerValues(metrics.generator, stats.generator);
-        RunStats.addTimerValues(metrics.queries, stats.queries);
-        RunStats.addMeterValues(metrics.exceptions, stats.exceptions);
-        RunStats.addMeterValues(metrics.success, stats.success);
+        DataTools.addTimerValues(metrics.generator, stats.generator);
+        DataTools.addTimerValues(metrics.queries, stats.queries);
+        DataTools.addMeterValues(metrics.exceptions, stats.exceptions);
+        DataTools.addMeterValues(metrics.success, stats.success);
+
+        MetricRegistry registry = metrics.registry;
+        UserDefinedStats uds = stats.userDefined;
+        MetricFilter metricFilter = (name, metric) -> !name.startsWith(".");
+        uds.gauges.putAll(Maps.transformValues(registry.getGauges(metricFilter), g -> g.getValue().toString()));
+        uds.counters.putAll(Maps.transformValues(registry.getCounters(metricFilter), Counter::getCount));
+        uds.meters.putAll(
+                Maps.transformValues(registry.getMeters(metricFilter), m -> {
+                            MeterStatsImpl s = new MeterStatsImpl();
+                            DataTools.addMeterValues(m, s);
+                            return s;
+                        }
+                )
+        );
+        uds.histograms.putAll(
+                Maps.transformValues(registry.getHistograms(metricFilter), h -> {
+                            HistogramStatsImpl s = new HistogramStatsImpl();
+                            DataTools.addHistogramValues(h, s);
+                            return s;
+                        }
+                )
+        );
+        uds.timers.putAll(
+                Maps.transformValues(registry.getTimers(metricFilter), t -> {
+                            TimerStats s = new TimerStats();
+                            DataTools.addTimerValues(t, s);
+                            return s;
+                        }
+                )
+        );
     }
+
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {

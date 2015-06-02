@@ -25,41 +25,62 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli.commands;
+package load_engine.agent.data.stats;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import load_engine.agent.data.stats.RunStats;
-import load_engine.cli.AgentInfo;
-import load_engine.cli.OrchEngine;
-import load_engine.cli.OrchTestInfo;
+public class MeterStatsImpl implements MeterStats {
+    private long count;
+    private double meanRate;
+    private double oneMinuteRate;
+    private double fiveMinutesRate;
+    private double fifteenMinutesRate;
 
-@Parameters(commandNames = "test-stats")
-public class TestStats implements OrchEngine.Command {
-    @Parameter(names = "-test", required = true)
-    String testId;
-    private OrchEngine orchEngine;
-
-    public TestStats(OrchEngine orchEngine) {
-        this.orchEngine = orchEngine;
+    @Override
+    public long getCount() {
+        return count;
     }
 
     @Override
-    public void run() throws Exception {
-        OrchTestInfo test = orchEngine.collectTests().get(testId);
-        if (test == null) {
-            System.out.println("Test is not found");
-            return;
-        }
-        for (AgentInfo agent : test.agents) {
-            RunStats stats = agent.client().stats(testId);
-            System.out.printf("= %s (start: %s, duration: %s) ==\n", agent, stats.startDate, stats.duration);
-            System.out.printf(
-                    "  Queries: %s (success: %s, exceptions: %s)\n",
-                    stats.queries.getCount(),
-                    stats.success.getCount(),
-                    stats.exceptions.getCount()
-            );
-        }
+    public void setCount(long count) {
+        this.count = count;
+    }
+
+    @Override
+    public double getMeanRate() {
+        return meanRate;
+    }
+
+    @Override
+    public void setMeanRate(double meanRate) {
+        this.meanRate = meanRate;
+    }
+
+    @Override
+    public double getOneMinuteRate() {
+        return oneMinuteRate;
+    }
+
+    @Override
+    public void setOneMinuteRate(double oneMinuteRate) {
+        this.oneMinuteRate = oneMinuteRate;
+    }
+
+    @Override
+    public double getFiveMinutesRate() {
+        return fiveMinutesRate;
+    }
+
+    @Override
+    public void setFiveMinutesRate(double fiveMinutesRate) {
+        this.fiveMinutesRate = fiveMinutesRate;
+    }
+
+    @Override
+    public double getFifteenMinutesRate() {
+        return fifteenMinutesRate;
+    }
+
+    @Override
+    public void setFifteenMinutesRate(double fifteenMinutesRate) {
+        this.fifteenMinutesRate = fifteenMinutesRate;
     }
 }

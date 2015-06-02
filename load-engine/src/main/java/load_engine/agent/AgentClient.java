@@ -30,6 +30,7 @@ package load_engine.agent;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import load_engine.agent.data.*;
+import load_engine.agent.data.stats.RunStats;
 
 import java.io.*;
 import java.net.HttpURLConnection;

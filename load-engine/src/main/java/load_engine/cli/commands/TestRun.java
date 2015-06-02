@@ -31,7 +31,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import load_engine.agent.data.RunStats;
+import load_engine.agent.data.stats.*;
 import load_engine.cli.AgentInfo;
 import load_engine.cli.OrchEngine;
 import load_engine.cli.OrchJarInfo;
@@ -97,7 +97,7 @@ public class TestRun implements OrchEngine.Command {
         private LogThread(String testId, List<AgentInfo> agents) throws IOException {
             this.testId = testId;
             this.agents = agents;
-            logWriter = new PrintStream(new File("log")); //todo: file name shold contain date, etc
+            logWriter = new PrintStream(new File("log")); //todo: file name should contain date, etc
         }
 
         @Override
@@ -130,37 +130,43 @@ public class TestRun implements OrchEngine.Command {
         }
 
         private void printStats(AgentInfo agent, int iteration, RunStats stats) {
-            printMetric(agent, iteration, "general", "duration", stats.duration);
-            printTimerStats(agent, iteration, "generator", stats.generator);
-            printTimerStats(agent, iteration, "queries", stats.queries);
-            printMeterStats(agent, iteration, "success", stats.success);
-            printMeterStats(agent, iteration, "exceptions", stats.exceptions);
+            printMetric(agent, iteration, ".duration", "seconds", stats.duration);
+            printTimerStats(agent, iteration, ".generator", stats.generator);
+            printTimerStats(agent, iteration, ".queries", stats.queries);
+            printMeterStats(agent, iteration, ".success", stats.success);
+            printMeterStats(agent, iteration, ".exceptions", stats.exceptions);
+            UserDefinedStats uds = stats.userDefined;
+            uds.gauges.forEach((k, v) -> printMetric(agent, iteration, k, "value", v));
+            uds.counters.forEach((k, v) -> printMetric(agent, iteration, k, "value", v));
+            uds.meters.forEach((k, v) -> printMeterStats(agent, iteration, k, v));
+            uds.histograms.forEach((k, v) -> printHistogramStats(agent, iteration, k, v));
+            uds.timers.forEach((k, v) -> printTimerStats(agent, iteration, k, v));
         }
 
-        private void printTimerStats(AgentInfo agent, int iteration, String name, RunStats.TimerStats stats) {
-            printMetric(agent, iteration, name, "count", stats.count);
-            printMetric(agent, iteration, name, "min", stats.min);
-            printMetric(agent, iteration, name, "max", stats.max);
-            printMetric(agent, iteration, name, "mean", stats.mean);
-            printMetric(agent, iteration, name, "median", stats.median);
-            printMetric(agent, iteration, name, "stddev", stats.stddev);
-            printMetric(agent, iteration, name, "percentile75", stats.percentile75);
-            printMetric(agent, iteration, name, "percentile95", stats.percentile95);
-            printMetric(agent, iteration, name, "percentile98", stats.percentile98);
-            printMetric(agent, iteration, name, "percentile99", stats.percentile99);
-            printMetric(agent, iteration, name, "percentile999", stats.percentile999);
-            printMetric(agent, iteration, name, "meanRate", stats.meanRate);
-            printMetric(agent, iteration, name, "oneMinuteRate", stats.oneMinuteRate);
-            printMetric(agent, iteration, name, "fiveMinutesRate", stats.fiveMinutesRate);
-            printMetric(agent, iteration, name, "fifteenMinutesRate", stats.fifteenMinutesRate);
+        private void printMeterStats(AgentInfo agent, int iteration, String name, MeterStats stats) {
+            printMetric(agent, iteration, name, "count", stats.getCount());
+            printMetric(agent, iteration, name, "meanRate", stats.getMeanRate());
+            printMetric(agent, iteration, name, "oneMinuteRate", stats.getOneMinuteRate());
+            printMetric(agent, iteration, name, "fiveMinutesRate", stats.getFiveMinutesRate());
+            printMetric(agent, iteration, name, "fifteenMinutesRate", stats.getFifteenMinutesRate());
         }
 
-        private void printMeterStats(AgentInfo agent, int iteration, String name, RunStats.MeterStats stats) {
-            printMetric(agent, iteration, name, "count", stats.count);
-            printMetric(agent, iteration, name, "meanRate", stats.meanRate);
-            printMetric(agent, iteration, name, "oneMinuteRate", stats.oneMinuteRate);
-            printMetric(agent, iteration, name, "fiveMinutesRate", stats.fiveMinutesRate);
-            printMetric(agent, iteration, name, "fifteenMinutesRate", stats.fifteenMinutesRate);
+        private void printHistogramStats(AgentInfo agent, int iteration, String name, HistogramStats stats) {
+            printMetric(agent, iteration, name, "min", stats.getMin());
+            printMetric(agent, iteration, name, "max", stats.getMax());
+            printMetric(agent, iteration, name, "mean", stats.getMean());
+            printMetric(agent, iteration, name, "median", stats.getMedian());
+            printMetric(agent, iteration, name, "stddev", stats.getStddev());
+            printMetric(agent, iteration, name, "percentile75", stats.getPercentile75());
+            printMetric(agent, iteration, name, "percentile95", stats.getPercentile95());
+            printMetric(agent, iteration, name, "percentile98", stats.getPercentile98());
+            printMetric(agent, iteration, name, "percentile99", stats.getPercentile99());
+            printMetric(agent, iteration, name, "percentile999", stats.getPercentile999());
+        }
+
+        private void printTimerStats(AgentInfo agent, int iteration, String name, TimerStats stats) {
+            printMeterStats(agent, iteration, name, stats);
+            printHistogramStats(agent, iteration, name, stats);
         }
 
         private void printMetric(AgentInfo agent, int iteration, String metric, String subMetric, Object value) {

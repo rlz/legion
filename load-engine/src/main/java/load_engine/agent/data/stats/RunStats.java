@@ -25,41 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package load_engine.cli.commands;
+package load_engine.agent.data.stats;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import load_engine.agent.data.stats.RunStats;
-import load_engine.cli.AgentInfo;
-import load_engine.cli.OrchEngine;
-import load_engine.cli.OrchTestInfo;
+import load_engine.agent.data.RunInfo;
 
-@Parameters(commandNames = "test-stats")
-public class TestStats implements OrchEngine.Command {
-    @Parameter(names = "-test", required = true)
-    String testId;
-    private OrchEngine orchEngine;
-
-    public TestStats(OrchEngine orchEngine) {
-        this.orchEngine = orchEngine;
-    }
-
-    @Override
-    public void run() throws Exception {
-        OrchTestInfo test = orchEngine.collectTests().get(testId);
-        if (test == null) {
-            System.out.println("Test is not found");
-            return;
-        }
-        for (AgentInfo agent : test.agents) {
-            RunStats stats = agent.client().stats(testId);
-            System.out.printf("= %s (start: %s, duration: %s) ==\n", agent, stats.startDate, stats.duration);
-            System.out.printf(
-                    "  Queries: %s (success: %s, exceptions: %s)\n",
-                    stats.queries.getCount(),
-                    stats.success.getCount(),
-                    stats.exceptions.getCount()
-            );
-        }
-    }
+public class RunStats extends RunInfo {
+    public final TimerStats generator = new TimerStats();
+    public final TimerStats queries = new TimerStats();
+    public final MeterStats success = new MeterStatsImpl();
+    public final MeterStats exceptions = new MeterStatsImpl();
+    public final UserDefinedStats userDefined = new UserDefinedStats();
+    public long startDate;
+    public long duration;
 }

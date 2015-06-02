@@ -28,58 +28,38 @@
 package load_engine.agent.data;
 
 import com.codahale.metrics.Metered;
+import com.codahale.metrics.Sampling;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
+import load_engine.agent.data.stats.HistogramStats;
+import load_engine.agent.data.stats.MeterStats;
+import load_engine.agent.data.stats.TimerStats;
 
-public class RunStats extends RunInfo {
-    public final TimerStats generator = new TimerStats();
-    public final TimerStats queries = new TimerStats();
-    public final MeterStats success = new MeterStats();
-    public final MeterStats exceptions = new MeterStats();
-    public long startDate;
-    public long duration;
-
-    public static void addTimerValues(Timer src, TimerStats object) {
-        addMeterValues(src, object);
+public class DataTools {
+    public static void addHistogramValues(Sampling src, HistogramStats object) {
         Snapshot snapshot = src.getSnapshot();
-        object.min = snapshot.getMin();
-        object.max = snapshot.getMax();
-        object.mean = snapshot.getMean();
-        object.stddev = snapshot.getStdDev();
-        object.median = snapshot.getMedian();
-        object.percentile75 = snapshot.get75thPercentile();
-        object.percentile95 = snapshot.get95thPercentile();
-        object.percentile98 = snapshot.get98thPercentile();
-        object.percentile99 = snapshot.get99thPercentile();
-        object.percentile999 = snapshot.get999thPercentile();
+        object.setMin(snapshot.getMin());
+        object.setMax(snapshot.getMax());
+        object.setMean(snapshot.getMean());
+        object.setStddev(snapshot.getStdDev());
+        object.setMedian(snapshot.getMedian());
+        object.setPercentile75(snapshot.get75thPercentile());
+        object.setPercentile95(snapshot.get95thPercentile());
+        object.setPercentile98(snapshot.get98thPercentile());
+        object.setPercentile99(snapshot.get99thPercentile());
+        object.setPercentile999(snapshot.get999thPercentile());
     }
 
     public static void addMeterValues(Metered src, MeterStats stats) {
-        stats.count = src.getCount();
-        stats.meanRate = src.getMeanRate();
-        stats.oneMinuteRate = src.getOneMinuteRate();
-        stats.fiveMinutesRate = src.getFiveMinuteRate();
-        stats.fifteenMinutesRate = src.getFifteenMinuteRate();
+        stats.setCount(src.getCount());
+        stats.setMeanRate(src.getMeanRate());
+        stats.setOneMinuteRate(src.getOneMinuteRate());
+        stats.setFiveMinutesRate(src.getFiveMinuteRate());
+        stats.setFifteenMinutesRate(src.getFifteenMinuteRate());
     }
 
-    public static class MeterStats {
-        public long count;
-        public double meanRate;
-        public double oneMinuteRate;
-        public double fiveMinutesRate;
-        public double fifteenMinutesRate;
-    }
-
-    public static class TimerStats extends MeterStats {
-        public double min;
-        public double max;
-        public double mean;
-        public double stddev;
-        public double median;
-        public double percentile75;
-        public double percentile95;
-        public double percentile98;
-        public double percentile99;
-        public double percentile999;
+    public static void addTimerValues(Timer src, TimerStats stats) {
+        addMeterValues(src, stats);
+        addHistogramValues(src, stats);
     }
 }

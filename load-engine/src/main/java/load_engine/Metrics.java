@@ -52,7 +52,7 @@ public class Metrics {
     }
 
     public Metrics(MetricRegistry registry) {
-        this(registry, "generator", "queries", "success", "exception", "startDate", "duration");
+        this(registry, ".generator", ".queries", ".success", ".exception", ".startDate", ".duration");
     }
 
     public Metrics(
