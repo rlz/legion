@@ -37,15 +37,14 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.SetMultimap;
 import jline.console.ConsoleReader;
-import jline.console.completer.Completer;
 import load_engine.agent.data.JarInfo;
 import load_engine.agent.data.RunInfo;
 import load_engine.cli.commands.*;
+import load_engine.cli.completers.CommandsCompleter;
+import load_engine.cli.completers.JarPathCompleter;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OrchEngine {
@@ -58,7 +57,7 @@ public class OrchEngine {
         reader.setPrompt("load-orch> ");
     }
 
-    List<Command> commands() {
+    public List<Command> commands() {
         return ImmutableList.of(
                 new DelAgent(this),
                 new ClearAgents(this),
@@ -68,7 +67,8 @@ public class OrchEngine {
                 new Jars(this),
                 new TestRun(this),
                 new Tests(this),
-                new TestStats(this)
+                new TestStats(this),
+                new Help(this)
         );
     }
 
@@ -89,7 +89,7 @@ public class OrchEngine {
     }
 
     public void run() throws IOException {
-        reader.addCompleter(new CommandsCompleter());
+        reader.addCompleter(new CommandsCompleter(this));
         reader.addCompleter(new JarPathCompleter());
         String line;
         while ((line = reader.readLine()) != null) {
@@ -158,75 +158,5 @@ public class OrchEngine {
         }
 
         void run() throws Exception;
-    }
-
-    private static class JarPathCompleter implements Completer {
-        Pattern pattern = Pattern.compile("^jar-upload\\s+-jar\\s+(.*)");
-
-        @Override
-        public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-            if (buffer.length() > cursor) {
-                return -1;
-            }
-
-            Matcher matcher = pattern.matcher(buffer);
-
-            if (!matcher.matches()) {
-                return -1;
-            }
-
-            String prefix = matcher.group(1);
-            if (prefix.equals("..")) {
-                candidates.add("/");
-                return cursor;
-            }
-
-            File dir;
-            int index;
-            String partialName;
-            if (prefix.contains("/")) {
-                dir = new File(prefix.substring(0, prefix.lastIndexOf('/')));
-                index = buffer.lastIndexOf('/') + 1;
-                partialName = prefix.substring(prefix.lastIndexOf('/') + 1, prefix.length());
-            } else {
-                dir = new File(".");
-                index = buffer.length() - prefix.length();
-                partialName = prefix;
-            }
-            if (!dir.isDirectory()) {
-                return 0;
-            }
-            for (File f : dir.listFiles()) {
-                if (!f.getName().startsWith(partialName)) {
-                    continue;
-                }
-                if (f.isDirectory()) {
-                    candidates.add(f.getName() + "/");
-                } else {
-                    candidates.add(f.getName());
-                }
-            }
-            return index;
-        }
-    }
-
-    private class CommandsCompleter implements Completer {
-        final List<String> commands = Lists.newArrayList();
-
-        public CommandsCompleter() {
-            commands().forEach(c -> commands.add(c.getName()));
-        }
-
-        @Override
-        public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-            if (buffer.length() > cursor) {
-                return -1;
-            }
-            if (buffer.contains(" ")) {
-                return -1;
-            }
-            commands.stream().filter(c -> c.startsWith(buffer)).forEach(candidates::add);
-            return 0;
-        }
     }
 }
