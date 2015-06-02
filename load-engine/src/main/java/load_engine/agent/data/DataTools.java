@@ -27,13 +27,10 @@
 
 package load_engine.agent.data;
 
-import com.codahale.metrics.Metered;
-import com.codahale.metrics.Sampling;
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.Timer;
-import load_engine.agent.data.stats.HistogramStats;
-import load_engine.agent.data.stats.MeterStats;
-import load_engine.agent.data.stats.TimerStats;
+import com.codahale.metrics.*;
+import com.google.common.collect.Maps;
+import load_engine.Metrics;
+import load_engine.agent.data.stats.*;
 
 public class DataTools {
     public static void addHistogramValues(Sampling src, HistogramStats object) {
@@ -61,5 +58,44 @@ public class DataTools {
     public static void addTimerValues(Timer src, TimerStats stats) {
         addMeterValues(src, stats);
         addHistogramValues(src, stats);
+    }
+
+    public static void fillRunStats(Metrics metrics, RunStats stats) {
+        stats.duration = metrics.duration.getValue();
+        stats.startDate = metrics.startDate.getValue();
+        addTimerValues(metrics.generator, stats.generator);
+        addTimerValues(metrics.queries, stats.queries);
+        addMeterValues(metrics.exceptions, stats.exceptions);
+        addMeterValues(metrics.success, stats.success);
+
+        MetricRegistry registry = metrics.registry;
+        UserDefinedStats uds = stats.userDefined;
+        MetricFilter metricFilter = (name, metric) -> !name.startsWith(".");
+        uds.gauges.putAll(Maps.transformValues(registry.getGauges(metricFilter), g -> g.getValue().toString()));
+        uds.counters.putAll(Maps.transformValues(registry.getCounters(metricFilter), Counter::getCount));
+        uds.meters.putAll(
+                Maps.transformValues(registry.getMeters(metricFilter), m -> {
+                            MeterStatsImpl s = new MeterStatsImpl();
+                            addMeterValues(m, s);
+                            return s;
+                        }
+                )
+        );
+        uds.histograms.putAll(
+                Maps.transformValues(registry.getHistograms(metricFilter), h -> {
+                            HistogramStatsImpl s = new HistogramStatsImpl();
+                            addHistogramValues(h, s);
+                            return s;
+                        }
+                )
+        );
+        uds.timers.putAll(
+                Maps.transformValues(registry.getTimers(metricFilter), t -> {
+                            TimerStats s = new TimerStats();
+                            addTimerValues(t, s);
+                            return s;
+                        }
+                )
+        );
     }
 }
