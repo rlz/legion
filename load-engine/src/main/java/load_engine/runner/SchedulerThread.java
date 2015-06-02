@@ -28,15 +28,19 @@
 package load_engine.runner;
 
 import com.codahale.metrics.Timer;
+import load_engine.Generator;
 import load_engine.Metrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 
 public class SchedulerThread<Task> extends Thread {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchedulerThread.class);
+
     private final BlockingQueue<ScheduledTask<Task>> queue;
-    private final Supplier<Task> supplier;
+    private final Generator<Task> generator;
     private final QpsScheduler scheduler;
     private final BooleanSupplier canSchedule;
     private final Runnable doneNotifier;
@@ -44,14 +48,14 @@ public class SchedulerThread<Task> extends Thread {
 
     public SchedulerThread(
             BlockingQueue<ScheduledTask<Task>> queue,
-            Supplier<Task> supplier,
+            Generator<Task> generator,
             QpsScheduler scheduler,
             BooleanSupplier canSchedule,
             Runnable doneNotifier,
             Metrics metrics
     ) {
         this.queue = queue;
-        this.supplier = supplier;
+        this.generator = generator;
         this.scheduler = scheduler;
         this.canSchedule = canSchedule;
         this.doneNotifier = doneNotifier;
@@ -83,11 +87,14 @@ public class SchedulerThread<Task> extends Thread {
 
     ScheduledTask<Task> genTask() {
         try (Timer.Context ignored = metrics.generator.time()) {
-            Task task = supplier.get();
+            Task task = generator.generate();
             if (task == null) {
                 return null;
             }
             return new ScheduledTask<>(task, scheduler.next());
+        } catch (Exception e) {
+            LOGGER.error("Generator thread ends with error", e);
+            return null;
         }
     }
 }

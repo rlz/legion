@@ -34,8 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -70,11 +68,11 @@ public class LoadGeneratorTest {
         LoadGenerator<Object> loadGenerator = new LoadGenerator<>(-1, 100, -1, new Metrics(metricRegistry));
         AtomicInteger requests = new AtomicInteger();
         Object task = new Object();
-        Supplier<Object> supplier = () -> task;
-        Consumer<Object> consumer = t -> requests.incrementAndGet();
+        Generator<Object> generator = () -> task;
+        Loader<Object> loader = t -> requests.incrementAndGet();
         loadGenerator.doTest(
-                ImmutableList.of(supplier),
-                ImmutableList.of(consumer)
+                ImmutableList.of(generator),
+                ImmutableList.of(loader)
         );
         assertEquals(100, requests.get());
     }
@@ -83,13 +81,13 @@ public class LoadGeneratorTest {
     public void testLimitTime() throws InterruptedException {
         LoadGenerator<Object> loadGenerator = new LoadGenerator<>(2, -1, -1, new Metrics(metricRegistry));
         Object task = new Object();
-        Supplier<Object> supplier = () -> task;
-        Consumer<Object> consumer = t -> {
+        Generator<Object> generator = () -> task;
+        Loader<Object> loader = t -> {
         };
         long startTime = System.nanoTime();
         loadGenerator.doTest(
-                ImmutableList.of(supplier),
-                ImmutableList.of(consumer)
+                ImmutableList.of(generator),
+                ImmutableList.of(loader)
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(duration < 2200l * 1000000 && duration > 1990 * 1000000);
@@ -99,13 +97,13 @@ public class LoadGeneratorTest {
     public void testLimitQps() throws InterruptedException {
         LoadGenerator<Object> loadGenerator = new LoadGenerator<>(-1, 20, 10, new Metrics(metricRegistry));
         Object task = new Object();
-        Supplier<Object> supplier = () -> task;
-        Consumer<Object> consumer = t -> {
+        Generator<Object> generator = () -> task;
+        Loader<Object> loader = t -> {
         };
         long startTime = System.nanoTime();
         loadGenerator.doTest(
-                ImmutableList.of(supplier),
-                ImmutableList.of(consumer)
+                ImmutableList.of(generator),
+                ImmutableList.of(loader)
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(duration < 2200l * 1000000 && duration > 1800 * 1000000);
@@ -115,16 +113,16 @@ public class LoadGeneratorTest {
     public void testSupplierMultithreading() throws InterruptedException {
         LoadGenerator<Object> loadGenerator = new LoadGenerator<>(-1, 200, -1, new Metrics(metricRegistry));
         Object task = new Object();
-        Supplier<Object> supplier = () -> {
+        Generator<Object> generator = () -> {
             sleep(40);
             return task;
         };
         AtomicInteger requests = new AtomicInteger();
-        Consumer<Object> consumer = t -> requests.incrementAndGet();
+        Loader<Object> loader = t -> requests.incrementAndGet();
         long startTime = System.nanoTime();
         loadGenerator.doTest(
-                ImmutableList.of(supplier, supplier, supplier, supplier),
-                ImmutableList.of(consumer)
+                ImmutableList.of(generator, generator, generator, generator),
+                ImmutableList.of(loader)
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(
@@ -137,9 +135,9 @@ public class LoadGeneratorTest {
     public void testConsumerMultithreading() throws InterruptedException {
         LoadGenerator<Object> loadGenerator = new LoadGenerator<>(-1, 200, -1, new Metrics(metricRegistry));
         Object task = new Object();
-        Supplier<Object> supplier = () -> task;
+        Generator<Object> generator = () -> task;
         AtomicInteger requests = new AtomicInteger();
-        Consumer<Object> consumer = t -> {
+        Loader<Object> loader = t -> {
             //System.out.printf("start %s: %s\n", Thread.currentThread().getName(), (System.nanoTime() - startTime) / 1000000.);
             sleep(40);
             requests.incrementAndGet();
@@ -147,8 +145,8 @@ public class LoadGeneratorTest {
         };
         long startTime = System.nanoTime();
         loadGenerator.doTest(
-                ImmutableList.of(supplier),
-                ImmutableList.of(consumer, consumer, consumer, consumer)
+                ImmutableList.of(generator),
+                ImmutableList.of(loader, loader, loader, loader)
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(

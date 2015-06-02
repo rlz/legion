@@ -29,6 +29,8 @@ package load_engine.runner;
 
 import com.beust.jcommander.internal.Lists;
 import com.codahale.metrics.MetricRegistry;
+import load_engine.Generator;
+import load_engine.Loader;
 import load_engine.Metrics;
 
 import java.util.ArrayList;
@@ -36,8 +38,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class LoadGenerator<Task> {
     private static final BooleanSupplier UNLIMITED_QUERIES = () -> true;
@@ -95,11 +95,11 @@ public class LoadGenerator<Task> {
         return metrics;
     }
 
-    public void start(Collection<? extends Supplier<Task>> suppliers, Collection<? extends Consumer<Task>> consumers) {
+    public void start(Collection<? extends Generator<Task>> generators, Collection<? extends Loader<Task>> loaders) {
         if (mainThread != null) {
             throw new IllegalStateException("Load generator can't be executed twice");
         }
-        mainThread = new MainThread(suppliers, consumers);
+        mainThread = new MainThread(generators, loaders);
         mainThread.start();
     }
 
@@ -121,8 +121,8 @@ public class LoadGenerator<Task> {
         mainThread.interrupt();
     }
 
-    public void doTest(Collection<? extends Supplier<Task>> suppliers, Collection<? extends Consumer<Task>> consumers) throws InterruptedException {
-        this.start(suppliers, consumers);
+    public void doTest(Collection<? extends Generator<Task>> generators, Collection<? extends Loader<Task>> loaders) throws InterruptedException {
+        this.start(generators, loaders);
         this.join();
     }
 
@@ -131,24 +131,24 @@ public class LoadGenerator<Task> {
         private final List<LoadThread<Task>> loadThreads = new ArrayList<>();
         private final BlockingQueue<ScheduledTask<Task>> queue = new ArrayBlockingQueue<>(10000);
 
-        public MainThread(Collection<? extends Supplier<Task>> suppliers, Collection<? extends Consumer<Task>> consumers) {
+        public MainThread(Collection<? extends Generator<Task>> generators, Collection<? extends Loader<Task>> loaders) {
             QpsScheduler scheduler = new QpsScheduler(qpsLimit);
             BooleanSupplier canSchedule = UNLIMITED_QUERIES;
             if (queriesLimit > 0) {
                 canSchedule = new QueriesLimit(queriesLimit);
             }
 
-            for (Consumer<Task> c : consumers) {
-                LoadThread<Task> thread = new LoadThread<>(queue, c, metrics);
+            for (Loader<Task> l : loaders) {
+                LoadThread<Task> thread = new LoadThread<>(queue, l, metrics);
                 loadThreads.add(thread);
             }
 
-            LoadThreadsFinalizer<Task> loadThreadsFinalizer = new LoadThreadsFinalizer<>(suppliers.size(), loadThreads);
+            LoadThreadsFinalizer<Task> loadThreadsFinalizer = new LoadThreadsFinalizer<>(generators.size(), loadThreads);
 
-            for (Supplier<Task> s : suppliers) {
+            for (Generator<Task> g : generators) {
                 SchedulerThread<Task> thread = new SchedulerThread<>(
                         queue,
-                        s,
+                        g,
                         scheduler,
                         canSchedule,
                         loadThreadsFinalizer,

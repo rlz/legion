@@ -28,19 +28,23 @@
 package load_engine.runner;
 
 import com.codahale.metrics.Timer;
+import load_engine.Loader;
 import load_engine.Metrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.function.Consumer;
 
 public class LoadThread<Task> extends Thread {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadThread.class);
+
     private final BlockingQueue<ScheduledTask<Task>> queue;
-    private final Consumer<Task> consumer;
+    private final Loader<Task> loader;
     private final Metrics metrics;
 
-    public LoadThread(BlockingQueue<ScheduledTask<Task>> queue, Consumer<Task> consumer, Metrics metrics) {
+    public LoadThread(BlockingQueue<ScheduledTask<Task>> queue, Loader<Task> loader, Metrics metrics) {
         this.queue = queue;
-        this.consumer = consumer;
+        this.loader = loader;
         this.metrics = metrics;
     }
 
@@ -80,8 +84,11 @@ public class LoadThread<Task> extends Thread {
 
         boolean success = true;
         try(Timer.Context ignored = metrics.queries.time()) {
-            consumer.accept(task.task);
-        } catch (RuntimeException e) {
+            loader.run(task.task);
+        } catch (InterruptedException e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.info("Exception in loader", e);
             metrics.exceptions.mark();
             success = false;
         }
