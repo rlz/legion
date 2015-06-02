@@ -27,6 +27,13 @@
 
 package load_engine;
 
+import java.util.Properties;
+
 public interface Loader<T> {
+    default void init(Properties props, Metrics metrics) {
+    }
+
+    ;
+
     void run(T task) throws Exception;
 }

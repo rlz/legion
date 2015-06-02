@@ -33,6 +33,7 @@ import load_engine.runner.LoadGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
@@ -72,7 +73,8 @@ public class LoadGeneratorTest {
         Loader<Object> loader = t -> requests.incrementAndGet();
         loadGenerator.doTest(
                 ImmutableList.of(generator),
-                ImmutableList.of(loader)
+                ImmutableList.of(loader),
+                new Properties()
         );
         assertEquals(100, requests.get());
     }
@@ -87,7 +89,8 @@ public class LoadGeneratorTest {
         long startTime = System.nanoTime();
         loadGenerator.doTest(
                 ImmutableList.of(generator),
-                ImmutableList.of(loader)
+                ImmutableList.of(loader),
+                new Properties()
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(duration < 2200l * 1000000 && duration > 1990 * 1000000);
@@ -103,7 +106,8 @@ public class LoadGeneratorTest {
         long startTime = System.nanoTime();
         loadGenerator.doTest(
                 ImmutableList.of(generator),
-                ImmutableList.of(loader)
+                ImmutableList.of(loader),
+                new Properties()
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(duration < 2200l * 1000000 && duration > 1800 * 1000000);
@@ -122,7 +126,8 @@ public class LoadGeneratorTest {
         long startTime = System.nanoTime();
         loadGenerator.doTest(
                 ImmutableList.of(generator, generator, generator, generator),
-                ImmutableList.of(loader)
+                ImmutableList.of(loader),
+                new Properties()
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(
@@ -146,7 +151,8 @@ public class LoadGeneratorTest {
         long startTime = System.nanoTime();
         loadGenerator.doTest(
                 ImmutableList.of(generator),
-                ImmutableList.of(loader, loader, loader, loader)
+                ImmutableList.of(loader, loader, loader, loader),
+                new Properties()
         );
         long duration = System.nanoTime() - startTime;
         assertTrue(

@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.Properties;
 
 public class RunsHandler implements JsonHttpHandler {
     private static final Map<String, JarRunner> runs = Maps.newConcurrentMap();
@@ -118,7 +119,13 @@ public class RunsHandler implements JsonHttpHandler {
             return;
         }
         JarRunner jarRunner = new JarRunner(new File(request.jarId + ".jar"), new MetricRegistry());
-        jarRunner.start(request.durationLimit, request.queriesLimit, request.qpsLimit, request.testName);
+        jarRunner.start(
+                request.durationLimit,
+                request.queriesLimit,
+                request.qpsLimit,
+                request.testName,
+                new Properties() // todo: support properties
+        );
         runs.put(request.runId, jarRunner);
         RunInfo info = new RunInfo();
         fillRunInfo(request.runId, jarRunner, info);

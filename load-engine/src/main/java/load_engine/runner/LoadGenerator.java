@@ -36,6 +36,7 @@ import load_engine.Metrics;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.function.BooleanSupplier;
 
@@ -95,11 +96,11 @@ public class LoadGenerator<Task> {
         return metrics;
     }
 
-    public void start(Collection<? extends Generator<Task>> generators, Collection<? extends Loader<Task>> loaders) {
+    public void start(Collection<? extends Generator<Task>> generators, Collection<? extends Loader<Task>> loaders, Properties props) {
         if (mainThread != null) {
             throw new IllegalStateException("Load generator can't be executed twice");
         }
-        mainThread = new MainThread(generators, loaders);
+        mainThread = new MainThread(generators, loaders, props);
         mainThread.start();
     }
 
@@ -121,8 +122,12 @@ public class LoadGenerator<Task> {
         mainThread.interrupt();
     }
 
-    public void doTest(Collection<? extends Generator<Task>> generators, Collection<? extends Loader<Task>> loaders) throws InterruptedException {
-        this.start(generators, loaders);
+    public void doTest(
+            Collection<? extends Generator<Task>> generators,
+            Collection<? extends Loader<Task>> loaders,
+            Properties props
+    ) throws InterruptedException {
+        this.start(generators, loaders, props);
         this.join();
     }
 
@@ -131,21 +136,36 @@ public class LoadGenerator<Task> {
         private final List<LoadThread<Task>> loadThreads = new ArrayList<>();
         private final BlockingQueue<ScheduledTask<Task>> queue = new ArrayBlockingQueue<>(10000);
 
-        public MainThread(Collection<? extends Generator<Task>> generators, Collection<? extends Loader<Task>> loaders) {
+        public MainThread(
+                Collection<? extends Generator<Task>> generators,
+                Collection<? extends Loader<Task>> loaders,
+                Properties props
+        ) {
+            props = (Properties) props.clone();
+            props.setProperty("generators", Integer.toString(generators.size()));
+            props.setProperty("loaders", Integer.toString(loaders.size()));
             QpsScheduler scheduler = new QpsScheduler(qpsLimit);
             BooleanSupplier canSchedule = UNLIMITED_QUERIES;
             if (queriesLimit > 0) {
                 canSchedule = new QueriesLimit(queriesLimit);
             }
 
+            int loaderIndex = 0;
             for (Loader<Task> l : loaders) {
+                Properties loaderProps = (Properties) props.clone();
+                loaderProps.setProperty("loaderIndex", Integer.toString(loaderIndex++));
+                l.init(loaderProps, metrics);
                 LoadThread<Task> thread = new LoadThread<>(queue, l, metrics);
                 loadThreads.add(thread);
             }
 
             LoadThreadsFinalizer<Task> loadThreadsFinalizer = new LoadThreadsFinalizer<>(generators.size(), loadThreads);
 
+            int generatorIndex = 0;
             for (Generator<Task> g : generators) {
+                Properties generatorProps = (Properties) props.clone();
+                generatorProps.setProperty("generatorIndex", Integer.toString(generatorIndex++));
+                g.init(generatorProps, metrics);
                 SchedulerThread<Task> thread = new SchedulerThread<>(
                         queue,
                         g,

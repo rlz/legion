@@ -68,7 +68,7 @@ public class JarRunner {
         return registry;
     }
 
-    public void start(int maxDuration, int queriesLimit, int qpsLimit, String name) {
+    public void start(int maxDuration, int queriesLimit, int qpsLimit, String name, Properties properties) {
         if (loadGenerator != null) {
             return;
         }
@@ -81,9 +81,9 @@ public class JarRunner {
         }
         try {
             LoadTest testInstance = test.newInstance();
-            testInstance.init(new Properties(), registry); // todo: provide properties
+            testInstance.init(properties, registry);
             loadGenerator = new LoadGenerator(maxDuration, queriesLimit, qpsLimit, new Metrics(registry));
-            loadGenerator.start(testInstance.getGenerators(), testInstance.getLoaders());
+            loadGenerator.start(testInstance.getGenerators(), testInstance.getLoaders(), properties);
         } catch (InstantiationException | IllegalAccessException e) {
             LOGGER.error("Can't instantiate test", e);
             throw new RuntimeException(e);

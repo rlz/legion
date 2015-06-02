@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.util.Properties;
 
 
 public class JarRunnerTest {
@@ -42,7 +43,7 @@ public class JarRunnerTest {
     public void test() throws ClassNotFoundException, MalformedURLException, InstantiationException, IllegalAccessException, InterruptedException {
         File f = new File("../load-test/target/load-test-0.0.1.jar");
         JarRunner runner = new JarRunner(f, new MetricRegistry());
-        runner.start(5, -1, 10, "test.Test");
+        runner.start(5, -1, 10, "test.Test", new Properties());
         runner.join();
     }
 }
