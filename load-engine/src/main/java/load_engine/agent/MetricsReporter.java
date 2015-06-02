@@ -28,6 +28,7 @@
 package load_engine.agent;
 
 import com.codahale.metrics.*;
+import load_engine.Metrics;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -55,10 +56,10 @@ public class MetricsReporter {
         SortedMap<String, Meter> meters = registry.getMeters();
         SortedMap<String, Timer> timers = registry.getTimers();
 
-        long duration = (long) gauges.get("duration").getValue();
+        long duration = (long) gauges.get(Metrics.DURATION_METRIC_NAME).getValue();
         out.printf("= %s =====\n", Duration.of(duration, ChronoUnit.MILLIS).toString().substring(2));
         for (Map.Entry<String, Gauge> k : gauges.entrySet()) {
-            if (!k.getKey().equals("duration")) {
+            if (!k.getKey().equals(Metrics.DURATION_METRIC_NAME)) {
                 out.printf("%s: %s\n", k.getKey(), k.getValue().getValue());
             }
         }

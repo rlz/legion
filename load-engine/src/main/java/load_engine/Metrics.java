@@ -35,6 +35,13 @@ import com.codahale.metrics.Timer;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Metrics {
+    public static final String GENERATOR_METRIC_NAME = ".generator";
+    public static final String QUERIES_METRIC_NAME = ".queries";
+    public static final String SUCCESS_METRIC_NAME = ".success";
+    public static final String EXCEPTION_METRIC_NAME = ".exception";
+    public static final String START_DATE_METRIC_NAME = ".startDate";
+    public static final String DURATION_METRIC_NAME = ".duration";
+
     public final MetricRegistry registry;
     public final Timer queries;
     public final Timer generator;
@@ -52,27 +59,15 @@ public class Metrics {
     }
 
     public Metrics(MetricRegistry registry) {
-        this(registry, ".generator", ".queries", ".success", ".exception", ".startDate", ".duration");
-    }
-
-    public Metrics(
-            MetricRegistry registry,
-            String generatorName,
-            String queriesName,
-            String successName,
-            String exceptionName,
-            String startDateName,
-            String durationName
-    ) {
         this.registry = registry;
 
-        generator = registry.timer(generatorName);
-        queries = registry.timer(queriesName);
-        success = registry.meter(successName);
-        exceptions = registry.meter(exceptionName);
+        generator = registry.timer(GENERATOR_METRIC_NAME);
+        queries = registry.timer(QUERIES_METRIC_NAME);
+        success = registry.meter(SUCCESS_METRIC_NAME);
+        exceptions = registry.meter(EXCEPTION_METRIC_NAME);
 
         this.startDate = startTime::get;
-        registry.register(startDateName, this.startDate);
+        registry.register(START_DATE_METRIC_NAME, this.startDate);
 
         duration = () -> {
             long start = startNanoTime.get();
@@ -87,7 +82,7 @@ public class Metrics {
             }
             return endNanoTime.get() - startNanoTime.get();
         };
-        registry.register(durationName, duration);
+        registry.register(DURATION_METRIC_NAME, duration);
     }
 
     public void markStart() {
