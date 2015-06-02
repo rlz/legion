@@ -43,6 +43,7 @@ import java.io.PrintStream;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Parameters(commandNames = "test-run")
 public class TestRun implements OrchEngine.Command {
@@ -116,7 +117,7 @@ public class TestRun implements OrchEngine.Command {
                         // todo : log error
                         continue;
                     }
-                    new StatsPrinter(logWriter) {
+                    new StatsPrinter(logWriter, TimeUnit.SECONDS, TimeUnit.MILLISECONDS) {
                         @Override
                         public void printMetric(int iteration, String metric, String subMetric, Object value) {
                             logWriter.println(

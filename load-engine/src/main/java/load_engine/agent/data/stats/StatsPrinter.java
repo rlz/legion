@@ -31,14 +31,19 @@ import com.google.common.base.Joiner;
 
 import java.io.PrintStream;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class StatsPrinter {
     private final static Joiner JOINER = Joiner.on('\t');
 
     private final PrintStream out;
+    private final long rateFactor;
+    private final double durationFactor;
 
-    public StatsPrinter(PrintStream out) {
+    public StatsPrinter(PrintStream out, TimeUnit rateUnit, TimeUnit durationUnit) {
         this.out = out;
+        this.rateFactor = rateUnit.toSeconds(1);
+        this.durationFactor = 1.0 / durationUnit.toNanos(1);
     }
 
     public void printStats(int iteration, RunStats stats) {
@@ -57,23 +62,23 @@ public class StatsPrinter {
 
     public void printMeterStats(int iteration, String name, MeterStats stats) {
         printMetric(iteration, name, "count", stats.getCount());
-        printMetric(iteration, name, "meanRate", stats.getMeanRate());
-        printMetric(iteration, name, "oneMinuteRate", stats.getOneMinuteRate());
-        printMetric(iteration, name, "fiveMinutesRate", stats.getFiveMinutesRate());
-        printMetric(iteration, name, "fifteenMinutesRate", stats.getFifteenMinutesRate());
+        printMetric(iteration, name, "meanRate", convertRate(stats.getMeanRate()));
+        printMetric(iteration, name, "oneMinuteRate", convertRate(stats.getOneMinuteRate()));
+        printMetric(iteration, name, "fiveMinutesRate", convertRate(stats.getFiveMinutesRate()));
+        printMetric(iteration, name, "fifteenMinutesRate", convertRate(stats.getFifteenMinutesRate()));
     }
 
     public void printHistogramStats(int iteration, String name, HistogramStats stats) {
-        printMetric(iteration, name, "min", stats.getMin());
-        printMetric(iteration, name, "max", stats.getMax());
-        printMetric(iteration, name, "mean", stats.getMean());
-        printMetric(iteration, name, "median", stats.getMedian());
-        printMetric(iteration, name, "stddev", stats.getStddev());
-        printMetric(iteration, name, "percentile75", stats.getPercentile75());
-        printMetric(iteration, name, "percentile95", stats.getPercentile95());
-        printMetric(iteration, name, "percentile98", stats.getPercentile98());
-        printMetric(iteration, name, "percentile99", stats.getPercentile99());
-        printMetric(iteration, name, "percentile999", stats.getPercentile999());
+        printMetric(iteration, name, "min", convertDuration(stats.getMin()));
+        printMetric(iteration, name, "max", convertDuration(stats.getMax()));
+        printMetric(iteration, name, "mean", convertDuration(stats.getMean()));
+        printMetric(iteration, name, "median", convertDuration(stats.getMedian()));
+        printMetric(iteration, name, "stddev", convertDuration(stats.getStddev()));
+        printMetric(iteration, name, "percentile75", convertDuration(stats.getPercentile75()));
+        printMetric(iteration, name, "percentile95", convertDuration(stats.getPercentile95()));
+        printMetric(iteration, name, "percentile98", convertDuration(stats.getPercentile98()));
+        printMetric(iteration, name, "percentile99", convertDuration(stats.getPercentile99()));
+        printMetric(iteration, name, "percentile999", convertDuration(stats.getPercentile999()));
     }
 
     public void printTimerStats(int iteration, String name, TimerStats stats) {
@@ -85,7 +90,7 @@ public class StatsPrinter {
         out.println(
                 JOINER.join(
                         iteration,
-                        new Date().toString(),
+                        new Date().getTime() / 1000,
                         metric,
                         subMetric,
                         value
@@ -93,4 +98,11 @@ public class StatsPrinter {
         );
     }
 
+    private double convertRate(double rate) {
+        return rate * rateFactor;
+    }
+
+    private double convertDuration(double duration) {
+        return duration * durationFactor;
+    }
 }
