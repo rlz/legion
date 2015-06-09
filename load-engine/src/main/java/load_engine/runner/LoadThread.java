@@ -64,6 +64,7 @@ public class LoadThread<Task> extends Thread {
                 throw new RuntimeException(e);
             }
         }
+        loader.close();
     }
 
     private void processTask(ScheduledTask<Task> task) throws InterruptedException {

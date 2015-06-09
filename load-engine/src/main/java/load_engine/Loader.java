@@ -33,7 +33,8 @@ public interface Loader<T> {
     default void init(Properties props, Metrics metrics) {
     }
 
-    ;
-
     void run(T task) throws Exception;
+
+    default void close() {
+    }
 }
