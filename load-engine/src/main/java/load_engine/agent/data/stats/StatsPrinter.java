@@ -47,7 +47,7 @@ public class StatsPrinter {
     }
 
     public void printStats(int iteration, RunStats stats) {
-        printMetric(iteration, ".duration", "seconds", stats.duration);
+        printMetric(iteration, ".duration", "seconds", ((double) stats.duration) / 1000);
         printTimerStats(iteration, ".generator", stats.generator);
         printTimerStats(iteration, ".queries", stats.queries);
         printMeterStats(iteration, ".success", stats.success);
