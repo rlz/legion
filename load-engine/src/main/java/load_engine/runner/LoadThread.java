@@ -53,37 +53,28 @@ public class LoadThread<Task> extends Thread {
         while (true) {
             try {
                 ScheduledTask<Task> task = queue.take();
+                if (ScheduledTask.isFinalizer(task)) {
+                    LOGGER.trace("Got finalizer - stop processing");
+                    ScheduledTask.addFinalizer(queue);
+                    break;
+                }
                 processTask(task);
             } catch (InterruptedException e) {
-                break;
+                LOGGER.info("interrupted");
+                throw new RuntimeException(e);
             }
-        }
-
-        ScheduledTask<Task> task = queue.poll();
-        while (task != null) {
-            try {
-                processTask(task);
-            } catch (InterruptedException e) {
-                // ignore
-            }
-            task = queue.poll();
         }
     }
 
     private void processTask(ScheduledTask<Task> task) throws InterruptedException {
         long now = System.nanoTime();
-        boolean interrupted = false;
         while (((task.startTime - now) / 1000000) > 0) {
-            try {
-                Thread.sleep((task.startTime - now) / 1000000);
-            } catch (InterruptedException e) {
-                interrupted = true;
-            }
+            Thread.sleep((task.startTime - now) / 1000000);
             now = System.nanoTime();
         }
 
         boolean success = true;
-        try(Timer.Context ignored = metrics.queries.time()) {
+        try (Timer.Context ignored = metrics.queries.time()) {
             loader.run(task.task);
         } catch (InterruptedException e) {
             throw e;
@@ -94,10 +85,6 @@ public class LoadThread<Task> extends Thread {
         }
         if (success) {
             metrics.success.mark();
-        }
-
-        if (interrupted || interrupted()) {
-            throw new InterruptedException();
         }
     }
 }

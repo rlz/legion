@@ -32,6 +32,8 @@ import com.codahale.metrics.MetricRegistry;
 import load_engine.Generator;
 import load_engine.Loader;
 import load_engine.Metrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +43,7 @@ import java.util.concurrent.*;
 import java.util.function.BooleanSupplier;
 
 public class LoadGenerator<Task> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadGenerator.class);
     private static final BooleanSupplier UNLIMITED_QUERIES = () -> true;
 
     private final int maxDuration;
@@ -156,10 +159,11 @@ public class LoadGenerator<Task> {
                 loaderProps.setProperty("loaderIndex", Integer.toString(loaderIndex++));
                 l.init(loaderProps, metrics);
                 LoadThread<Task> thread = new LoadThread<>(queue, l, metrics);
+                thread.setName("LoadThread-" + loaderIndex);
                 loadThreads.add(thread);
             }
 
-            LoadThreadsFinalizer<Task> loadThreadsFinalizer = new LoadThreadsFinalizer<>(generators.size(), loadThreads);
+            LoadThreadsFinalizer<Task> loadThreadsFinalizer = new LoadThreadsFinalizer<>(generators.size(), queue);
 
             int generatorIndex = 0;
             for (Generator<Task> g : generators) {
@@ -174,6 +178,7 @@ public class LoadGenerator<Task> {
                         loadThreadsFinalizer,
                         metrics
                 );
+                thread.setName("GeneratorThread-" + generatorIndex);
                 schedulers.add(thread);
             }
         }
@@ -197,7 +202,9 @@ public class LoadGenerator<Task> {
             }
 
             waitForFinish(schedulers);
+            LOGGER.trace("All scheduler exited");
             waitForFinish(loadThreads);
+            LOGGER.trace("All loader exited");
 
             if (executorService != null) {
                 executorService.shutdownNow();
@@ -208,9 +215,13 @@ public class LoadGenerator<Task> {
 
         @Override
         public void interrupt() {
+            LOGGER.trace("About to interrupt schedulers");
             schedulers.forEach(Thread::interrupt);
+            LOGGER.trace("Waiting schedulers to exit");
             waitForFinish(schedulers);
+            LOGGER.trace("All schedulers exited - clear queue");
             queue.clear();
+            ScheduledTask.addFinalizer(queue);
         }
     }
 }

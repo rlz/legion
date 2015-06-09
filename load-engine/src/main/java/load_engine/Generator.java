@@ -33,7 +33,5 @@ public interface Generator<T> {
     default void init(Properties props, Metrics metrics) {
     }
 
-    ;
-
     T generate() throws Exception;
 }

@@ -27,16 +27,21 @@
 
 package load_engine.runner;
 
-import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LoadThreadsFinalizer<Task> implements Runnable {
-    private final AtomicInteger schedulers = new AtomicInteger();
-    private final Collection<LoadThread<Task>> loadThreads;
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadThreadsFinalizer.class);
 
-    public LoadThreadsFinalizer(int schedulers, Collection<LoadThread<Task>> loadThreads) {
+    private final AtomicInteger schedulers = new AtomicInteger();
+    private final BlockingQueue<ScheduledTask<Task>> queue;
+
+    public LoadThreadsFinalizer(int schedulers, BlockingQueue<ScheduledTask<Task>> queue) {
+        this.queue = queue;
         this.schedulers.set(schedulers);
-        this.loadThreads = loadThreads;
     }
 
     @Override
@@ -45,8 +50,7 @@ public class LoadThreadsFinalizer<Task> implements Runnable {
         if (runningSchedulers > 0) {
             return;
         }
-        for (LoadThread t : loadThreads) {
-            t.interrupt();
-        }
+        LOGGER.trace("Put finalizer into queue");
+        ScheduledTask.addFinalizer(queue);
     }
 }

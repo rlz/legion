@@ -27,12 +27,38 @@
 
 package load_engine.runner;
 
+import java.util.concurrent.BlockingQueue;
+
 public class ScheduledTask<Task> {
+    private static final ScheduledTask finalizer = new ScheduledTask<>(null, -1);
     public final Task task;
     public final long startTime;
 
     public ScheduledTask(Task task, long startTime) {
         this.task = task;
         this.startTime = startTime;
+    }
+
+    public static <T> ScheduledTask<T> getFinalizer() {
+        return (ScheduledTask<T>) finalizer;
+    }
+
+    public static <T> boolean isFinalizer(ScheduledTask<T> task) {
+        return task == finalizer;
+    }
+
+    public static <T> void addFinalizer(BlockingQueue<ScheduledTask<T>> queue) {
+        boolean interrupted = false;
+        while (true) {
+            try {
+                queue.put(getFinalizer());
+                break;
+            } catch (InterruptedException e) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
