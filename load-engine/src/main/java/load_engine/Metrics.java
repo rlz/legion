@@ -80,7 +80,7 @@ public class Metrics {
             if (end < 0) {
                 return (System.nanoTime() - start) / 1000000;
             }
-            return endNanoTime.get() - startNanoTime.get();
+            return (endNanoTime.get() - startNanoTime.get()) / 1000000;
         };
         registry.register(DURATION_METRIC_NAME, duration);
     }

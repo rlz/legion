@@ -59,7 +59,7 @@ public class MetricsReporter {
 
         Duration duration = Duration.of((long) gauges.get(Metrics.DURATION_METRIC_NAME).getValue(), ChronoUnit.MILLIS);
         Date startDate = new Date((long) gauges.get(Metrics.START_DATE_METRIC_NAME).getValue() * 1000);
-        out.printf("= %s (started: %s)=====\n", duration.toString().substring(2), startDate);
+        out.printf("= %s (started: %s) =====\n", duration.toString().substring(2), startDate);
         for (Map.Entry<String, Gauge> k : gauges.entrySet()) {
             if (!k.getKey().equals(Metrics.DURATION_METRIC_NAME) && !k.getKey().equals(Metrics.START_DATE_METRIC_NAME)) {
                 out.printf("%s: %s\n", k.getKey(), k.getValue().getValue());
