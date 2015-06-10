@@ -86,11 +86,13 @@ public class SchedulerThread<Task> extends Thread {
     }
 
     ScheduledTask<Task> genTask() {
-        try (Timer.Context ignored = metrics.generator.time()) {
+        try {
+            Timer.Context timerCtx = metrics.generator.time();
             Task task = generator.generate();
             if (task == null) {
                 return null;
             }
+            timerCtx.stop();
             return new ScheduledTask<>(task, scheduler.next());
         } catch (Exception e) {
             LOGGER.error("Generator thread ends with error", e);
