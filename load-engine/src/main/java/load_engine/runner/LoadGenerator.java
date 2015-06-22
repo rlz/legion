@@ -157,7 +157,7 @@ public class LoadGenerator<Task> {
             for (Loader<Task> l : loaders) {
                 Properties loaderProps = (Properties) props.clone();
                 loaderProps.setProperty("loaderIndex", Integer.toString(loaderIndex++));
-                l.init(loaderProps, metrics);
+                l.init(loaderProps, metrics.registry);
                 LoadThread<Task> thread = new LoadThread<>(queue, l, metrics);
                 thread.setName("LoadThread-" + loaderIndex);
                 loadThreads.add(thread);
@@ -169,7 +169,7 @@ public class LoadGenerator<Task> {
             for (Generator<Task> g : generators) {
                 Properties generatorProps = (Properties) props.clone();
                 generatorProps.setProperty("generatorIndex", Integer.toString(generatorIndex++));
-                g.init(generatorProps, metrics);
+                g.init(generatorProps, metrics.registry);
                 SchedulerThread<Task> thread = new SchedulerThread<>(
                         queue,
                         g,

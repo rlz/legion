@@ -27,10 +27,12 @@
 
 package load_engine;
 
+import com.codahale.metrics.MetricRegistry;
+
 import java.util.Properties;
 
 public interface Loader<T> {
-    default void init(Properties props, Metrics metrics) {
+    default void init(Properties props, MetricRegistry registry) {
     }
 
     void run(T task) throws Exception;
