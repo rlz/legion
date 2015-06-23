@@ -30,6 +30,7 @@ package load_engine.cli.commands;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import load_engine.agent.AgentClient;
+import load_engine.agent.data.JarInfo;
 import load_engine.cli.AgentInfo;
 import load_engine.cli.OrchEngine;
 
@@ -47,8 +48,19 @@ public class JarsUpload implements OrchEngine.Command {
 
     @Override
     public void run() throws Exception {
+        String jarId = null;
+        if (orchEngine.getAgents().isEmpty()) {
+            System.out.println("Can't upload JAR: no agent defined");
+            return;
+        }
+        System.out.println("Upload:");
         for (AgentInfo agent : orchEngine.getAgents()) {
-            new AgentClient(agent.host, agent.port).uploadJar(jar);
+            JarInfo info = new AgentClient(agent.host, agent.port).uploadJar(jar);
+            jarId = info.jarId;
+            System.out.printf("  - %s\n", agent);
+        }
+        if (jarId != null) {
+            System.out.printf("Jar ID: %s\n", jarId);
         }
     }
 }
