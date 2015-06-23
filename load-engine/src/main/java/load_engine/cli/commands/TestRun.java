@@ -29,6 +29,7 @@ package load_engine.cli.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import load_engine.agent.data.stats.RunStats;
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -65,6 +67,9 @@ public class TestRun implements OrchEngine.Command {
     @Parameter(names = "-logs")
     boolean logs = false;
 
+    @Parameter(names = "-p", variableArity = true)
+    final List<String> properties = Lists.newArrayList();
+
     private OrchEngine orchEngine;
 
     public TestRun(OrchEngine orchEngine) {
@@ -79,10 +84,27 @@ public class TestRun implements OrchEngine.Command {
             System.out.println("Jar not found");
             return;
         }
+
+        Properties props = new Properties();
+        for (String p : properties) {
+            int eqIndex = p.indexOf('=');
+            if (eqIndex == -1) {
+                System.out.printf("Property must be formatted as <name>=<value>. Can't parse `%s`\n", p);
+                return;
+            }
+            String key = p.substring(0, eqIndex);
+            String value = p.substring(eqIndex + 1, p.length());
+            props.setProperty(key, value);
+        }
         System.out.printf("Run test on agents: %s\n", Joiner.on(", ").join(info.agents.stream().map(a -> a.host + ":" + a.port).iterator()));
         System.out.printf("Test ID: %s\n", runId);
+
+        props.setProperty("agents", Integer.toString(info.agents.size()));
+        int agentIndex = 0;
         for (AgentInfo agent : info.agents) {
-            agent.client().run(runId, jarId, testName, durationLimit, queriesLimit, qpsLimit);
+            Properties agentProperties = new Properties(props);
+            agentProperties.setProperty("agent-index", Integer.toString(agentIndex++));
+            agent.client().run(runId, jarId, testName, durationLimit, queriesLimit, qpsLimit, agentProperties);
         }
 
         if (logs) {

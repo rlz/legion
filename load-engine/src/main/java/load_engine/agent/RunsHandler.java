@@ -36,6 +36,8 @@ import load_engine.agent.data.RunRequest;
 import load_engine.agent.data.RunsList;
 import load_engine.agent.data.stats.RunStats;
 import load_engine.runner.JarRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,6 +47,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class RunsHandler implements JsonHttpHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RunsHandler.class);
     private static final Map<String, JarRunner> runs = Maps.newConcurrentMap();
 
     private static void fillRunInfo(String runId, JarRunner runner, RunInfo info) {
@@ -80,6 +83,8 @@ public class RunsHandler implements JsonHttpHandler {
                 httpExchange.sendResponseHeaders(400, 0);
                 httpExchange.getResponseBody().write("{\"error\":\"Wrong path or method\"}".getBytes());
             }
+        } catch (Exception e) {
+            LOGGER.error("Internal error", e);
         } finally {
             httpExchange.close();
         }
@@ -108,13 +113,16 @@ public class RunsHandler implements JsonHttpHandler {
             httpExchange.getResponseBody().write("{\"error\":\"Jar not found\"}".getBytes());
             return;
         }
+
+        Properties properties = new Properties();
+        properties.putAll(request.properties);
         JarRunner jarRunner = new JarRunner(new File(request.jarId + ".jar"), new MetricRegistry());
         jarRunner.start(
                 request.durationLimit,
                 request.queriesLimit,
                 request.qpsLimit,
                 request.testName,
-                new Properties() // todo: support properties
+                properties
         );
         runs.put(request.runId, jarRunner);
         RunInfo info = new RunInfo();

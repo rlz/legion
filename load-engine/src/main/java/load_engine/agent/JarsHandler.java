@@ -89,6 +89,9 @@ class JarsHandler implements JsonHttpHandler {
                 httpExchange.sendResponseHeaders(400, 0);
                 httpExchange.getResponseBody().write("{\"error\":\"Wrong path or method\"}".getBytes());
             }
+        } catch (Exception e) {
+            // todo: format exeptions as JSON
+            LOGGER.error("Internal error", e);
         } finally {
             httpExchange.close();
         }

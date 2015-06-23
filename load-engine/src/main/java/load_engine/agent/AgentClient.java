@@ -37,6 +37,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
+import java.util.Properties;
 
 public class AgentClient {
     private static final Gson GSON = new Gson();
@@ -78,7 +79,15 @@ public class AgentClient {
         return GSON.fromJson(reader, JarsList.class).jars;
     }
 
-    public RunInfo run(String runId, String jarId, String testId, int durationLimit, int queriesLimit, int qpsLimit) throws IOException {
+    public RunInfo run(
+            String runId,
+            String jarId,
+            String testId,
+            int durationLimit,
+            int queriesLimit,
+            int qpsLimit,
+            Properties properties
+    ) throws IOException {
         RunRequest request = new RunRequest();
         request.runId = runId;
         request.jarId = jarId;
@@ -86,6 +95,9 @@ public class AgentClient {
         request.durationLimit = durationLimit;
         request.queriesLimit = queriesLimit;
         request.qpsLimit = qpsLimit;
+        for (String pName : properties.stringPropertyNames()) {
+            request.properties.put(pName, properties.getProperty(pName));
+        }
         byte[] requestBody = GSON.toJson(request).getBytes();
 
         HttpURLConnection conn = connect("/runs");

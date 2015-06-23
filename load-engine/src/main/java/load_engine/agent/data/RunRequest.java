@@ -27,6 +27,10 @@
 
 package load_engine.agent.data;
 
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+
 public class RunRequest {
     public String runId;
     public String jarId;
@@ -34,4 +38,5 @@ public class RunRequest {
     public int durationLimit;
     public int queriesLimit;
     public int qpsLimit;
+    public final Map<String, String> properties = Maps.newHashMap();
 }
