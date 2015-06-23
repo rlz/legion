@@ -29,18 +29,18 @@ package load_engine.test;
 
 import com.beust.jcommander.internal.Lists;
 import com.codahale.metrics.MetricRegistry;
+import load_engine.Generator;
 import load_engine.LoadTest;
+import load_engine.Loader;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class SampleTest implements LoadTest<String> {
-    List<Supplier<String>> generators = Lists.newArrayList();
-    List<Consumer<String>> loaders = Lists.newArrayList();
+    List<Generator<String>> generators = Lists.newArrayList();
+    List<Loader<String>> loaders = Lists.newArrayList();
 
     @Override
     public void init(Properties properties, MetricRegistry registry) {
@@ -52,12 +52,12 @@ public class SampleTest implements LoadTest<String> {
     }
 
     @Override
-    public Collection<Supplier<String>> getGenerators() {
+    public Collection<Generator<String>> getGenerators() {
         return generators;
     }
 
     @Override
-    public Collection<Consumer<String>> getLoaders() {
+    public Collection<Loader<String>> getLoaders() {
         return loaders;
     }
 }

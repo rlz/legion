@@ -41,7 +41,7 @@ public interface LoadTest<Task> {
 
     void init(Properties properties, MetricRegistry registry);
 
-    Collection<Supplier<Task>> getGenerators();
+    Collection<Generator<Task>> getGenerators();
 
-    Collection<Consumer<Task>> getLoaders();
+    Collection<Loader<Task>> getLoaders();
 }
