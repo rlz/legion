@@ -31,17 +31,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>legion</groupId>
-    <artifactId>legion-parent</artifactId>
+    <groupId>legion-examples</groupId>
+    <artifactId>simple-jar</artifactId>
     <version>0.0.1</version>
-    <packaging>pom</packaging>
-    <name>Legion Parent</name>
 
-    <modules>
-        <module>legion-lib</module>
-        <module>legion-tool</module>
-        <module>examples</module>
-    </modules>
+    <name>Legion-Examples: Simple JAR</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>legion</groupId>
+            <artifactId>legion-lib</artifactId>
+            <version>0.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
@@ -52,18 +55,6 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
