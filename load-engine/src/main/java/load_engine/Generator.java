@@ -36,4 +36,7 @@ public interface Generator<T> {
     }
 
     T generate() throws Exception;
+
+    default void close() {
+    }
 }

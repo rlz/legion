@@ -33,33 +33,45 @@ import load_engine.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
 public class SchedulerThread<Task> extends Thread {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchedulerThread.class);
 
     private final BlockingQueue<ScheduledTask<Task>> queue;
-    private final Generator<Task> generator;
+    private final Properties threadProperties;
     private final QpsScheduler scheduler;
     private final BooleanSupplier canSchedule;
     private final Runnable doneNotifier;
     private final Metrics metrics;
+    private final AtomicInteger generatorsCounter;
+
+    private Iterator<Generator<Task>> generatorsIterator;
+    private Generator<Task> currentGenerator;
 
     public SchedulerThread(
             BlockingQueue<ScheduledTask<Task>> queue,
-            Generator<Task> generator,
+            List<Generator<Task>> generators,
             QpsScheduler scheduler,
             BooleanSupplier canSchedule,
             Runnable doneNotifier,
-            Metrics metrics
+            Properties threadProperties,
+            Metrics metrics,
+            AtomicInteger generatorsCounter
     ) {
         this.queue = queue;
-        this.generator = generator;
+        this.threadProperties = threadProperties;
+        this.generatorsIterator = generators.iterator();
         this.scheduler = scheduler;
         this.canSchedule = canSchedule;
         this.doneNotifier = doneNotifier;
         this.metrics = metrics;
+        this.generatorsCounter = generatorsCounter;
     }
 
     @Override
@@ -87,16 +99,41 @@ public class SchedulerThread<Task> extends Thread {
 
     ScheduledTask<Task> genTask() {
         try {
-            Timer.Context timerCtx = metrics.generator.time();
-            Task task = generator.generate();
-            if (task == null) {
-                return null;
+            Task task;
+            while (true) {
+                if (currentGenerator == null) {
+                    if (generatorsIterator.hasNext()) {
+                        initGenerator();
+                    } else {
+                        return null;
+                    }
+                }
+                Timer.Context timerCtx = metrics.generator.time();
+                task = currentGenerator.generate();
+                if (task != null) {
+                    timerCtx.stop();
+                    return new ScheduledTask<>(task, scheduler.next());
+                }
+                if (generatorsIterator.hasNext()) {
+                    initGenerator();
+                } else {
+                    currentGenerator.close();
+                    return null;
+                }
             }
-            timerCtx.stop();
-            return new ScheduledTask<>(task, scheduler.next());
         } catch (Exception e) {
             LOGGER.error("Generator thread ends with error", e);
             return null;
         }
+    }
+
+    void initGenerator() {
+        if (currentGenerator != null) {
+            currentGenerator.close();
+        }
+        currentGenerator = generatorsIterator.next();
+        Properties p = (Properties) threadProperties.clone();
+        p.setProperty("generatorIndex", Integer.toString(generatorsCounter.getAndIncrement()));
+        currentGenerator.init(p, metrics.registry);
     }
 }

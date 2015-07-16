@@ -27,8 +27,8 @@
 
 package load_engine.runner;
 
-import com.beust.jcommander.internal.Lists;
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.collect.Lists;
 import load_engine.Generator;
 import load_engine.Loader;
 import load_engine.Metrics;
@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
 public class LoadGenerator<Task> {
@@ -49,17 +50,31 @@ public class LoadGenerator<Task> {
     private final int maxDuration;
     private final int queriesLimit;
     private final int qpsLimit;
+    private final int generatorThreadsLimit;
     private final Metrics metrics;
     private MainThread mainThread;
 
-    public LoadGenerator(int maxDuration, int queriesLimit, int qpsLimit, MetricRegistry registry) {
-        this(maxDuration, queriesLimit, qpsLimit, new Metrics(registry));
+    public LoadGenerator(
+            int maxDuration,
+            int queriesLimit,
+            int qpsLimit,
+            int generatorThreadsLimit,
+            MetricRegistry registry
+    ) {
+        this(maxDuration, queriesLimit, qpsLimit, generatorThreadsLimit, new Metrics(registry));
     }
 
-    public LoadGenerator(int maxDuration, int queriesLimit, int qpsLimit, Metrics metrics) {
+    public LoadGenerator(
+            int maxDuration,
+            int queriesLimit,
+            int qpsLimit,
+            int generatorThreadsLimit,
+            Metrics metrics
+    ) {
         this.maxDuration = maxDuration;
         this.queriesLimit = queriesLimit;
         this.qpsLimit = qpsLimit;
+        this.generatorThreadsLimit = generatorThreadsLimit;
         this.metrics = metrics;
     }
 
@@ -71,16 +86,6 @@ public class LoadGenerator<Task> {
                 // ignore
             }
         }
-    }
-
-    public static <T> Collection<T> many(T obj, int count) {
-        List<T> result = Lists.newArrayList();
-
-        for (int i = 0; i < count; ++i) {
-            result.add(obj);
-        }
-
-        return result;
     }
 
     public int getMaxDuration() {
@@ -145,6 +150,7 @@ public class LoadGenerator<Task> {
                 Properties props
         ) {
             props = (Properties) props.clone();
+            props.setProperty("generatorThreads", Integer.toString(Integer.min(generatorThreadsLimit, generators.size())));
             props.setProperty("generators", Integer.toString(generators.size()));
             props.setProperty("loaders", Integer.toString(loaders.size()));
             QpsScheduler scheduler = new QpsScheduler(qpsLimit);
@@ -165,22 +171,40 @@ public class LoadGenerator<Task> {
 
             LoadThreadsFinalizer<Task> loadThreadsFinalizer = new LoadThreadsFinalizer<>(generators.size(), queue);
 
-            int generatorIndex = 0;
-            for (Generator<Task> g : generators) {
+            int generatorThreadIndex = 0;
+            AtomicInteger generatorsCounter = new AtomicInteger();
+            for (List<Generator<Task>> g : distGeneratorsByThreads(generators, generatorThreadsLimit)) {
                 Properties generatorProps = (Properties) props.clone();
-                generatorProps.setProperty("generatorIndex", Integer.toString(generatorIndex++));
-                g.init(generatorProps, metrics.registry);
+                generatorProps.setProperty("generatorThreadIndex", Integer.toString(generatorThreadIndex++));
                 SchedulerThread<Task> thread = new SchedulerThread<>(
                         queue,
                         g,
                         scheduler,
                         canSchedule,
                         loadThreadsFinalizer,
-                        metrics
+                        generatorProps,
+                        metrics,
+                        generatorsCounter
                 );
-                thread.setName("GeneratorThread-" + generatorIndex);
+                thread.setName("GeneratorThread-" + generatorThreadIndex);
                 schedulers.add(thread);
             }
+        }
+
+        private List<List<Generator<Task>>> distGeneratorsByThreads(Collection<? extends Generator> generators, int threads) {
+            int partitions = Integer.min(threads, generators.size());
+            List<List<Generator<Task>>> result = Lists.newArrayListWithCapacity(partitions);
+            for (int i = 0; i < partitions; ++i) {
+                result.add(Lists.newArrayList());
+            }
+            int index = 0;
+            for (Generator<Task> g : generators) {
+                result.get(index++).add(g);
+                if (index == result.size()) {
+                    index = 0;
+                }
+            }
+            return result;
         }
 
         @Override
