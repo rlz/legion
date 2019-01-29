@@ -1,0 +1,6 @@
+rootProject.name = 'load-engine-parent'
+include ':load-engine'
+// include ':test-project'
+
+project(':load-engine').projectDir = "$rootDir/load-engine" as File
+// project(':test-project').projectDir = "$rootDir/test-project" as File

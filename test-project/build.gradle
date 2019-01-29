@@ -1,0 +1,5 @@
+
+description = 'Simple load-engine project for testing'
+dependencies {
+  providedCompile project(':load-engine')
+}
