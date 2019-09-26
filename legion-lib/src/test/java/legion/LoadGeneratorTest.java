@@ -132,7 +132,7 @@ public class LoadGeneratorTest {
         long duration = System.nanoTime() - startTime;
         assertTrue(
                 String.format("Unexpected test duration: %sms", duration/1000000),
-                duration < 2100l * 1000000 && duration > 1900 * 1000000
+                duration < 2200L * 1000000 && duration > 1900 * 1000000
         );
     }
 
@@ -157,7 +157,7 @@ public class LoadGeneratorTest {
         long duration = System.nanoTime() - startTime;
         assertTrue(
                 String.format("Unexpected test duration: %sms", duration/1000000),
-                duration < 2100l * 1000000 && duration > 1900 * 1000000
+                duration < 2200L * 1000000 && duration > 1900 * 1000000
         );
     }
 }
