@@ -28,34 +28,36 @@
 package legion.tool.cli.completers;
 
 import com.beust.jcommander.internal.Lists;
-import jline.console.completer.Completer;
 import legion.tool.cli.OrchEngine;
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.ParsedLine;
 
 import java.util.List;
 
 public class CommandsCompleter implements Completer {
-    final List<String> commands = Lists.newArrayList();
+    private final List<OrchEngine.Command> commands = Lists.newArrayList();
 
     public CommandsCompleter(OrchEngine orchEngine) {
-        orchEngine.commands().forEach(c -> commands.add(c.getName()));
+        commands.addAll(orchEngine.commands());
     }
 
     @Override
-    public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-        int startIndex = 0;
-        String commandBuffer = buffer;
-        if (buffer.startsWith("help ")) {
-            startIndex = 5;
-            commandBuffer = buffer.substring(5);
+    public void complete(LineReader lineReader, ParsedLine parsedLine, List<Candidate> list) {
+        var line = parsedLine.line();
+
+        if (line.contains(" ")) {
+            for (var c : commands) {
+                if (line.startsWith(c.getName() + " ")) {
+                    c.completer().complete(lineReader, parsedLine, list);
+                    return;
+                }
+            }
         }
-        if (buffer.length() > cursor) {
-            return -1;
+
+        for (var c : commands) {
+            list.add(new Candidate(c.getName() + " ", c.getDisplayName(), null, c.getDescr(), null, null, false));
         }
-        if (commandBuffer.contains(" ")) {
-            return -1;
-        }
-        final String finalCommandBuffer = commandBuffer;
-        commands.stream().filter(c -> c.startsWith(finalCommandBuffer)).forEach(i -> candidates.add(i + " "));
-        return startIndex;
     }
 }

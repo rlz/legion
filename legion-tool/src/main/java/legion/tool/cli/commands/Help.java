@@ -31,8 +31,11 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import legion.tool.cli.OrchEngine;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.completer.StringsCompleter;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Parameters(commandNames = "help")
 public class Help implements OrchEngine.Command {
@@ -68,5 +71,20 @@ public class Help implements OrchEngine.Command {
             }
             System.out.println("Unknown command. Try to run `help`.");
         }
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "help [command]";
+    }
+
+    @Override
+    public String getDescr() {
+        return "Display commands help";
+    }
+
+    public Completer completer() {
+        var commands = orchEngine.commands().stream().map(OrchEngine.Command::getName).collect(Collectors.toUnmodifiableList());
+        return new StringsCompleter(commands);
     }
 }

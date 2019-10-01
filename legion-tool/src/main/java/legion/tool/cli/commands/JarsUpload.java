@@ -33,8 +33,14 @@ import legion.tool.agent.AgentClient;
 import legion.tool.agent.data.JarInfo;
 import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.completer.FileNameCompleter;
+import org.jline.reader.impl.completer.completer.StringsCompleter;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Parameters(commandNames = "jar-upload")
 public class JarsUpload implements OrchEngine.Command {
@@ -62,5 +68,18 @@ public class JarsUpload implements OrchEngine.Command {
         if (jarId != null) {
             System.out.printf("Jar ID: %s\n", jarId);
         }
+    }
+
+    public Completer completer() {
+        return new ArgumentCompleter(
+                new StringsCompleter("jar-upload"),
+                new StringsCompleter("-jar"),
+                new FileNameCompleter() {
+                    @Override
+                    protected boolean accept(Path path) {
+                        return Files.isDirectory(path) || Files.isReadable(path) && path.toString().endsWith(".jar");
+                    }
+                }
+        );
     }
 }

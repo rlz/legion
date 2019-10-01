@@ -33,6 +33,10 @@ import legion.tool.agent.data.stats.RunStats;
 import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
 import legion.tool.cli.OrchTestInfo;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.completer.StringsCompleter;
 
 @Parameters(commandNames = "test-stats")
 public class TestStats implements OrchEngine.Command {
@@ -61,5 +65,16 @@ public class TestStats implements OrchEngine.Command {
                     stats.exceptions.getCount()
             );
         }
+    }
+
+    public Completer completer() {
+        var c = new ArgumentCompleter(
+                new StringsCompleter("test-stats"),
+                new AggregateCompleter(
+                        new StringsCompleter("-test")
+                )
+        );
+        c.setStrict(true);
+        return c;
     }
 }

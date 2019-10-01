@@ -31,6 +31,10 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
+import org.jline.reader.Completer;
+import org.jline.reader.impl.completer.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.completer.StringsCompleter;
 
 @Parameters(commandNames = "agent-del")
 public class DelAgent implements OrchEngine.Command {
@@ -47,5 +51,17 @@ public class DelAgent implements OrchEngine.Command {
     @Override
     public void run() {
         orchEngine.delAgent(new AgentInfo(host, port));
+    }
+
+    public Completer completer() {
+        var c = new ArgumentCompleter(
+                new StringsCompleter("agent-del"),
+                new AggregateCompleter(
+                        new StringsCompleter("-host"),
+                        new StringsCompleter("-port")
+                )
+        );
+        c.setStrict(true);
+        return c;
     }
 }

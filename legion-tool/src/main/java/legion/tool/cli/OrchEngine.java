@@ -36,25 +36,33 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.SetMultimap;
-import jline.console.ConsoleReader;
 import legion.tool.agent.data.JarInfo;
 import legion.tool.agent.data.RunInfo;
 import legion.tool.cli.commands.*;
 import legion.tool.cli.completers.CommandsCompleter;
-import legion.tool.cli.completers.JarPathCompleter;
+import org.jline.reader.Completer;
+import org.jline.reader.EndOfFileException;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.impl.completer.completer.NullCompleter;
+import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class OrchEngine {
-    private final ConsoleReader reader;
+    private final LineReader reader;
     private final Set<AgentInfo> agents = Sets.newHashSet();
 
 
     public OrchEngine() throws IOException {
-        reader = new ConsoleReader();
-        reader.setPrompt("load-orch> ");
+        reader = LineReaderBuilder.builder()
+                .appName("Legion Orch")
+                .terminal(TerminalBuilder.terminal())
+                .completer(new CommandsCompleter(this))
+                .build();
+        reader.setOpt(LineReader.Option.AUTO_FRESH_LINE);
     }
 
     public List<Command> commands() {
@@ -89,15 +97,25 @@ public class OrchEngine {
     }
 
     public void run() throws IOException {
-        reader.addCompleter(new CommandsCompleter(this));
-        reader.addCompleter(new JarPathCompleter());
-        String line;
-        while ((line = reader.readLine()) != null) {
+//        reader.addCompleter(new CommandsCompleter(this));
+//        reader.addCompleter(new JarPathCompleter());
+        String line = null;
+        while (true) {
+            try {
+                line = reader.readLine("legion-orch> ");
+            } catch (EndOfFileException e) {
+                break;
+            }
+
+            if (line.isBlank()) {
+                continue;
+            }
+
             JCommander jc = new JCommander();
             List<Command> commands = commands();
             commands.forEach(jc::addCommand);
             try {
-                jc.parse(Splitter.on(Pattern.compile("\\s+")).splitToList(line).toArray(new String[]{}));
+                jc.parse(Splitter.on(Pattern.compile("\\s+")).splitToList(line.trim()).toArray(new String[]{}));
             } catch (RuntimeException e) {
                 e.printStackTrace();
                 continue;
@@ -109,7 +127,7 @@ public class OrchEngine {
                         cmd.run();
                     } catch (Exception e) {
                         e.printStackTrace();
-                        continue;
+                        // continue
                     }
                 }
             }
@@ -141,7 +159,7 @@ public class OrchEngine {
         for (Map.Entry<RunInfo, Collection<OrchTestInfo>> j : runs.asMap().entrySet()) {
             boolean isRunning = false;
             List<AgentInfo> agents = Lists.newArrayList();
-            for (OrchTestInfo info: j.getValue()) {
+            for (OrchTestInfo info : j.getValue()) {
                 if (info.runInfo.isRunning) {
                     isRunning = true;
                 }
@@ -157,6 +175,18 @@ public class OrchEngine {
             return this.getClass().getAnnotation(Parameters.class).commandNames()[0];
         }
 
+        default String getDisplayName() {
+            return getName();
+        }
+
+        default String getDescr() {
+            return null;
+        }
+
         void run() throws Exception;
+
+        default Completer completer() {
+            return new NullCompleter();
+        }
     }
 }
