@@ -32,8 +32,8 @@ import legion.tool.agent.data.RunInfo;
 public class RunStats extends RunInfo {
     public final TimerStats generator = new TimerStats();
     public final TimerStats queries = new TimerStats();
-    public final MeterStats success = new MeterStatsImpl();
-    public final MeterStats exceptions = new MeterStatsImpl();
+    public final MeterStatsImpl success = new MeterStatsImpl();
+    public final MeterStatsImpl exceptions = new MeterStatsImpl();
     public final UserDefinedStats userDefined = new UserDefinedStats();
     public long startDate;
     public long duration;
