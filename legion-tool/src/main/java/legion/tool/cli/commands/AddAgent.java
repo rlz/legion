@@ -33,7 +33,6 @@ import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
 import org.jline.reader.Completer;
 import org.jline.reader.impl.completer.completer.AggregateCompleter;
-import org.jline.reader.impl.completer.completer.ArgumentCompleter;
 import org.jline.reader.impl.completer.completer.StringsCompleter;
 
 @Parameters(commandNames = "agent-add")
@@ -54,14 +53,9 @@ public class AddAgent implements OrchEngine.Command {
     }
 
     public Completer completer() {
-        var c = new ArgumentCompleter(
-                new StringsCompleter("agent-add"),
-                new AggregateCompleter(
+        return new AggregateCompleter(
                         new StringsCompleter("-host"),
                         new StringsCompleter("-port")
-                )
         );
-        c.setStrict(true);
-        return c;
     }
 }

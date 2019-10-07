@@ -39,7 +39,6 @@ import legion.tool.cli.OrchEngine;
 import legion.tool.cli.OrchJarInfo;
 import org.jline.reader.Completer;
 import org.jline.reader.impl.completer.completer.AggregateCompleter;
-import org.jline.reader.impl.completer.completer.ArgumentCompleter;
 import org.jline.reader.impl.completer.completer.StringsCompleter;
 
 import java.io.File;
@@ -176,20 +175,15 @@ public class TestRun implements OrchEngine.Command {
     }
 
     public Completer completer() {
-        var c = new ArgumentCompleter(
-                new StringsCompleter("test-run"),
-                new AggregateCompleter(
-                        new StringsCompleter("-jar"),
-                        new StringsCompleter("-test"),
-                        new StringsCompleter("-duration-limit"),
-                        new StringsCompleter("-queries-limit"),
-                        new StringsCompleter("-qps-limit"),
-                        new StringsCompleter("-gen-threads-limit"),
-                        new StringsCompleter("-logs"),
-                        new StringsCompleter("-p")
-                )
+        return new AggregateCompleter(
+                new StringsCompleter("-jar"),
+                new StringsCompleter("-test"),
+                new StringsCompleter("-duration-limit"),
+                new StringsCompleter("-queries-limit"),
+                new StringsCompleter("-qps-limit"),
+                new StringsCompleter("-gen-threads-limit"),
+                new StringsCompleter("-logs"),
+                new StringsCompleter("-p")
         );
-        c.setStrict(true);
-        return c;
     }
 }
