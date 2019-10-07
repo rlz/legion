@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -81,11 +82,11 @@ public class JarRunner {
             throw new RuntimeException("Can't find test: " + name);
         }
         try {
-            LoadTest testInstance = test.newInstance();
+            LoadTest testInstance = test.getConstructor().newInstance();
             testInstance.init(properties, registry);
-            loadGenerator = new LoadGenerator(maxDuration, queriesLimit, qpsLimit, generatorThreadsLimit, new Metrics(registry));
+            loadGenerator = new LoadGenerator<>(maxDuration, queriesLimit, qpsLimit, generatorThreadsLimit, new Metrics(registry));
             loadGenerator.start(testInstance.getGenerators(), testInstance.getLoaders(), properties);
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             LOGGER.error("Can't instantiate test", e);
             throw new RuntimeException(e);
         }
