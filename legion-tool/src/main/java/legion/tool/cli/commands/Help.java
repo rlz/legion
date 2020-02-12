@@ -32,7 +32,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import legion.tool.cli.OrchEngine;
 import org.jline.reader.Completer;
-import org.jline.reader.impl.completer.completer.StringsCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -34,9 +34,9 @@ import legion.tool.agent.data.JarInfo;
 import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
 import org.jline.reader.Completer;
-import org.jline.reader.impl.completer.completer.ArgumentCompleter;
-import org.jline.reader.impl.completer.completer.FileNameCompleter;
-import org.jline.reader.impl.completer.completer.StringsCompleter;
+import org.jline.reader.impl.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.FileNameCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
 
 import java.io.File;
 import java.nio.file.Files;

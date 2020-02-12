@@ -38,8 +38,8 @@ import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
 import legion.tool.cli.OrchJarInfo;
 import org.jline.reader.Completer;
-import org.jline.reader.impl.completer.completer.AggregateCompleter;
-import org.jline.reader.impl.completer.completer.StringsCompleter;
+import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
 
 import java.io.File;
 import java.io.IOException;
