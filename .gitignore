@@ -3,3 +3,8 @@
 */target
 examples/*/target
 docs/_build
+.gradle
+gradle
+*/build
+gradlew
+gradlew.bat

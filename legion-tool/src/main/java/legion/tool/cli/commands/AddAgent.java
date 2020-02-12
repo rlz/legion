@@ -32,8 +32,8 @@ import com.beust.jcommander.Parameters;
 import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
 import org.jline.reader.Completer;
-import org.jline.reader.impl.completer.completer.AggregateCompleter;
-import org.jline.reader.impl.completer.completer.StringsCompleter;
+import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
 
 @Parameters(commandNames = "agent-add")
 public class AddAgent implements OrchEngine.Command {

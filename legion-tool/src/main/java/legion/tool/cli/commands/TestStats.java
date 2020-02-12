@@ -34,9 +34,9 @@ import legion.tool.cli.AgentInfo;
 import legion.tool.cli.OrchEngine;
 import legion.tool.cli.OrchTestInfo;
 import org.jline.reader.Completer;
-import org.jline.reader.impl.completer.completer.AggregateCompleter;
-import org.jline.reader.impl.completer.completer.ArgumentCompleter;
-import org.jline.reader.impl.completer.completer.StringsCompleter;
+import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
 
 @Parameters(commandNames = "test-stats")
 public class TestStats implements OrchEngine.Command {

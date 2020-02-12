@@ -46,7 +46,7 @@ public class SampleTest implements LoadTest<String> {
     public void init(Properties properties, MetricRegistry registry) {
         AtomicInteger counter = new AtomicInteger();
         for (int i = 0; i < 10; ++i) {
-            generators.add(() -> "r" + Integer.toString(counter.incrementAndGet()));
+            generators.add(() -> "r" + counter.incrementAndGet());
             loaders.add(System.out::println);
         }
     }
